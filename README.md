@@ -151,3 +151,9 @@ en_attente ──accepter──► accepte ──terminer──► termine ─�
      ▼                      ▼
   refuse            annule_par_client
 ```
+
+## Auteur
+
+**Mohamed Ayari** — conception et développement de DarFix (API Laravel, application Angular, service de recommandation IA).
+
+Projet de fin d'études (PFE).
