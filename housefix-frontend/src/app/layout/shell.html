@@ -1,0 +1,80 @@
+<div class="layout">
+  <aside class="sidebar" [class.open]="menuOpen()">
+    <div class="brand">
+      <span class="brand-name">DARFIX</span>
+      <span class="brand-role">{{ roleKey() | t }}</span>
+    </div>
+
+    <nav class="nav">
+      @for (item of nav(); track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: !!item.exact }"
+          class="nav-item"
+        >
+          <span class="nav-icon"><i class="bi" [class]="'bi ' + item.icon"></i></span>
+          {{ item.label | t }}
+          @if (item.label === 'layout.nav.messages' && unreadMessages() > 0) {
+            <span class="nav-badge" [attr.aria-label]="(unreadMessages() === 1 ? 'pages.messages.unreadOne' : 'pages.messages.unreadOther') | t: { count: unreadMessages() }">
+              {{ unreadMessages() > 99 ? '99+' : unreadMessages() }}
+            </span>
+          }
+        </a>
+      }
+    </nav>
+
+    @if (auth.user(); as user) {
+      <div class="user-box">
+        <div class="user">
+          <app-avatar [nom]="user.nom" [photoUrl]="user.photo_url" />
+          <div class="user-info">
+            <strong>{{ user.nom }}</strong>
+            <span>{{ roleKey() | t }}</span>
+          </div>
+        </div>
+        <a class="side-btn" [routerLink]="settingsPath()"><i class="bi bi-gear-fill"></i> {{ 'common.actions.settings' | t }}</a>
+        <button type="button" class="side-btn logout" (click)="auth.logout()">
+          <i class="bi bi-box-arrow-right"></i> {{ 'common.actions.logout' | t }}
+        </button>
+      </div>
+    }
+  </aside>
+
+  @if (menuOpen()) {
+    <div class="overlay" (click)="menuOpen.set(false)"></div>
+  }
+
+  <div class="main">
+    <header class="topbar">
+      <div class="row">
+        <button type="button" class="btn btn-outline btn-icon burger" (click)="menuOpen.set(true)" [attr.aria-label]="'layout.menu' | t">
+          <i class="bi bi-list"></i>
+        </button>
+        <h2>{{ title() | t }}</h2>
+      </div>
+      <div class="row">
+        <app-notification-bell />
+        <app-lang-switch />
+        <app-theme-toggle />
+      </div>
+    </header>
+
+    @if (auth.user(); as user) {
+      @if (user.role === 'prestataire' && user.prestataire?.validation_status !== 'valide') {
+        <div class="alert alert-warning validation-banner">
+          <i class="bi bi-hourglass-split"></i>
+          @if (user.prestataire?.validation_status === 'refuse') {
+            {{ 'layout.banner.refused' | t }}
+          } @else {
+            {{ 'layout.banner.pending' | t }}
+          }
+        </div>
+      }
+    }
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,127 @@
+<div class="page">
+  <div class="card filters">
+    <div class="search">
+      <i class="bi bi-search"></i>
+      <input class="form-control" [placeholder]="'client.prestataires.searchPlaceholder' | t" [ngModel]="q()" (ngModelChange)="onSearch($event)" />
+    </div>
+
+    <div class="filter-grid">
+      <div class="form-group">
+        <label class="form-label" for="f-cat">{{ 'client.prestataires.categorie' | t }}</label>
+        <select id="f-cat" class="form-control" [ngModel]="categorieId()" (ngModelChange)="apply(categorieId, $event)">
+          <option [ngValue]="null">{{ 'client.prestataires.allF' | t }}</option>
+          @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.nom }}</option> }
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-gouv">{{ 'client.prestataires.gouvernorat' | t }}</label>
+        <select id="f-gouv" class="form-control" [ngModel]="gouvernorat()" (ngModelChange)="apply(gouvernorat, $event)">
+          <option value="">{{ 'client.prestataires.allM' | t }}</option>
+          @for (g of gouvernorats; track g) { <option [value]="g">{{ g | gouv }}</option> }
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-note">{{ 'client.prestataires.minNote' | t }}</label>
+        <select id="f-note" class="form-control" [ngModel]="minNote()" (ngModelChange)="apply(minNote, $event)">
+          @for (n of notes; track n) {
+            <option [ngValue]="n">{{ (n === 0 ? 'client.prestataires.allNotes' : 'client.prestataires.noteAndUp') | t: { n: n } }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-tarif">{{ 'client.prestataires.maxTarif' | t }}</label>
+        <input id="f-tarif" type="number" min="0" class="form-control" [placeholder]="'client.prestataires.unlimited' | t" [ngModel]="maxTarif()" (ngModelChange)="onTarif($event)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-sort">{{ 'client.prestataires.sortBy' | t }}</label>
+        <select id="f-sort" class="form-control" [ngModel]="sort()" (ngModelChange)="apply(sort, $event)">
+          @for (s of sorts; track s) { <option [ngValue]="s">{{ 'client.prestataires.sorts.' + s | t }}</option> }
+        </select>
+      </div>
+    </div>
+
+    <div class="row-between">
+      <label class="check">
+        <input type="checkbox" [checked]="disponible()" (change)="apply(disponible, $any($event.target).checked)" />
+        {{ 'client.prestataires.availableOnly' | t }}
+      </label>
+      <div class="row">
+        @if (hasFilters()) {
+          <button type="button" class="btn btn-ghost btn-sm" (click)="reset()"><i class="bi bi-x-circle"></i> {{ 'common.actions.reset' | t }}</button>
+        }
+        <button type="button" class="btn btn-outline btn-sm" (click)="locate()" [disabled]="locating()">
+          <i class="bi" [class.bi-geo-alt-fill]="coords()" [class.bi-crosshair]="!coords()"></i>
+          {{ (locating() ? 'client.shared.locating' : coords() ? 'client.prestataires.positionActive' : 'client.shared.useMyPosition') | t }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-between">
+    <span class="muted">
+      @if (!loading()) {
+        {{ (results().length > 1 ? 'client.prestataires.foundOther' : 'client.prestataires.foundOne') | t: { count: results().length } }}
+      }
+    </span>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (results().length === 0) {
+    <div class="card empty-state">
+      <i class="bi bi-search"></i>
+      {{ 'client.prestataires.empty' | t }}
+    </div>
+  } @else {
+    <div class="grid-cards">
+      @for (p of results(); track p.id) {
+        <div class="card presta">
+          @if (topIds().has(p.id)) {
+            <span class="chip reco-chip"><i class="bi bi-stars"></i> {{ 'client.prestataires.recommended' | t }}</span>
+          }
+          <div class="row head">
+            <app-avatar [nom]="p.nom" [photoUrl]="p.photo_url" />
+            <div class="name">
+              <strong>{{ p.nom }}</strong>
+              @if (p.is_recommended) { <app-reco-badge /> }
+              <span class="muted small">
+                {{ p.prestataire?.categorie?.nom ?? '—' }}@if (p.prestataire?.specialite) { · {{ p.prestataire?.specialite }} }
+              </span>
+            </div>
+          </div>
+
+          <div class="details">
+            @if (p.gouvernorat) {
+              <div class="info-line"><i class="bi bi-geo-alt"></i> {{ p.gouvernorat | gouv }}@if (p.distance_km != null) { · {{ p.distance_km | appNumber: '1.0-1' }} {{ 'common.units.km' | t }} }</div>
+            } @else if (p.distance_km != null) {
+              <div class="info-line"><i class="bi bi-geo-alt"></i> {{ p.distance_km | appNumber: '1.0-1' }} {{ 'common.units.km' | t }}</div>
+            }
+            <div class="row small">
+              <app-star-rating [value]="p.prestataire?.note_moyenne ?? 0" [showValue]="true" />
+              <span class="muted">({{ 'common.units.reviews' | t: { count: p.prestataire?.nb_avis ?? 0 } }})</span>
+            </div>
+            <div class="row-between">
+              <strong class="tarif">
+                @if (p.prestataire?.tarif_horaire != null) { {{ p.prestataire?.tarif_horaire | appNumber: '1.0-2' }} {{ 'common.units.perHour' | t }} } @else { {{ 'client.shared.onQuote' | t }} }
+              </strong>
+              @if (p.prestataire?.is_available) {
+                <span class="badge badge-success"><i class="bi bi-circle-fill dot"></i> {{ 'client.shared.available' | t }}</span>
+              } @else {
+                <span class="badge badge-danger"><i class="bi bi-circle-fill dot"></i> {{ 'client.shared.unavailable' | t }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <a class="btn btn-outline btn-sm" [routerLink]="['/client/prestataires', p.id]">{{ 'common.actions.seeProfile' | t }}</a>
+            <a
+              class="btn btn-primary btn-sm"
+              routerLink="/client/rendez-vous/nouveau"
+              [queryParams]="{ prestataire: p.id, categorie: p.prestataire?.categorie_service_id }"
+            >{{ 'common.actions.book' | t }}</a>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

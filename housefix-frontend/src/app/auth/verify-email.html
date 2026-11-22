@@ -1,0 +1,60 @@
+<span class="blob one"></span>
+<span class="blob two"></span>
+
+<div class="top">
+  <a class="logo" routerLink="/" [attr.aria-label]="'auth.common.homeAria' | t">
+    <span class="logo-icon"><i class="bi bi-house-gear-fill"></i></span>
+    <div>
+      <strong>DarFix</strong>
+      <small>{{ 'common.tagline' | t }}</small>
+    </div>
+  </a>
+  <div class="top-actions">
+    <app-lang-switch />
+    <app-theme-toggle />
+  </div>
+</div>
+
+<div class="center">
+  <div class="auth-card">
+    <h1>{{ 'auth.verify.title' | t }}</h1>
+
+    @if (!email) {
+      <div class="alert alert-danger" style="margin: 14px 0">{{ 'auth.verify.missingEmail' | t }}</div>
+      <a class="btn btn-primary btn-block" style="padding: 12px" routerLink="/login">{{ 'auth.verify.goToLogin' | t }}</a>
+    } @else {
+      <p class="subtitle">{{ 'auth.verify.introBefore' | t }} <strong>{{ email }}</strong>{{ 'auth.verify.introAfter' | t }}</p>
+
+      @if (info()) {
+        <div class="alert alert-success" style="margin-bottom: 14px"><i class="bi bi-envelope-check"></i> {{ info() }}</div>
+      }
+      @if (error()) {
+        <div class="alert alert-danger" role="alert" style="margin-bottom: 14px"><i class="bi bi-exclamation-circle"></i> {{ error() }}</div>
+      }
+
+      <form (ngSubmit)="verify()">
+        <div class="form-group">
+          <label class="form-label" for="code">{{ 'auth.common.codeLabel' | t }}</label>
+          <input
+            id="code"
+            class="form-control code-input"
+            [class.is-invalid]="error()"
+            name="code"
+            [(ngModel)]="code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="••••••"
+          />
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top: 6px; padding: 12px" type="submit" [disabled]="loading()">
+          {{ (loading() ? 'auth.common.verifying' : 'auth.verify.submit') | t }}
+        </button>
+      </form>
+
+      <p class="footer-link">{{ 'auth.verify.spamBefore' | t }} <a (click)="resend()">{{ 'auth.verify.spamLink' | t }}</a>{{ 'auth.verify.spamAfter' | t }}</p>
+    }
+
+    <p class="footer-link"><a routerLink="/login"><i class="bi bi-arrow-left"></i> {{ 'auth.common.backToLogin' | t }}</a></p>
+  </div>
+</div>

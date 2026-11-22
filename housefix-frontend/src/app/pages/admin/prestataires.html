@@ -1,0 +1,139 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>{{ 'admin.prestataires.title' | t }}</h2>
+      <p>{{ (counts().tous === 1 ? 'admin.prestataires.subtitle.one' : 'admin.prestataires.subtitle.other') | t: { count: counts().tous } }}</p>
+    </div>
+    <div class="search">
+      <i class="bi bi-search"></i>
+      <input
+        type="search"
+        class="form-control"
+        [placeholder]="'admin.prestataires.searchPlaceholder' | t"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        [attr.aria-label]="'admin.prestataires.searchAria' | t"
+      />
+    </div>
+  </div>
+
+  <div class="tabs">
+    @for (f of filters; track f) {
+      <button type="button" [class.active]="filter() === f" (click)="filter.set(f)">
+        {{ 'admin.prestataires.filters.' + f | t }} ({{ counts()[f] }})
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (filtered().length === 0) {
+    <div class="card empty-state">
+      <i class="bi bi-person-x"></i>
+      {{ 'admin.prestataires.empty' | t }}
+    </div>
+  } @else {
+    <!-- Tableau (écrans larges) -->
+    <div class="card desktop">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ 'admin.prestataires.colPrestataire' | t }}</th>
+              <th>{{ 'admin.shared.phone' | t }}</th>
+              <th>{{ 'admin.shared.category' | t }}</th>
+              <th>{{ 'admin.shared.gouvernorat' | t }}</th>
+              <th>{{ 'admin.prestataires.colRating' | t }}</th>
+              <th>{{ 'admin.shared.status' | t }}</th>
+              <th class="text-right">{{ 'admin.shared.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of filtered(); track u.id) {
+              <tr>
+                <td>
+                  <div class="row nowrap-row">
+                    <app-avatar [nom]="u.nom" [photoUrl]="u.photo_url" />
+                    <div class="ident">
+                      <strong>{{ u.nom }}</strong>
+                      <div class="small muted">{{ u.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="nowrap">{{ u.telephone ?? '—' }}</td>
+                <td>{{ u.prestataire?.categorie?.nom ?? '—' }}</td>
+                <td>{{ (u.gouvernorat | gouv) || '—' }}</td>
+                <td class="nowrap"><app-star-rating [value]="u.prestataire?.note_moyenne ?? 0" [showValue]="true" /></td>
+                <td>
+                  <ng-container *ngTemplateOutlet="badges; context: { $implicit: u }" />
+                </td>
+                <td class="text-right">
+                  <ng-container *ngTemplateOutlet="actions; context: { $implicit: u }" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Cartes (mobile) -->
+    <div class="mobile stack">
+      @for (u of filtered(); track u.id) {
+        <div class="card">
+          <div class="row">
+            <app-avatar [nom]="u.nom" [photoUrl]="u.photo_url" />
+            <div class="ident">
+              <strong>{{ u.nom }}</strong>
+              <div class="small muted">{{ u.email }}</div>
+            </div>
+          </div>
+          <div class="stack m-body">
+            <div class="info-line"><i class="bi bi-telephone"></i><span>{{ u.telephone ?? '—' }}</span></div>
+            <div class="info-line"><i class="bi bi-tools"></i><span>{{ u.prestataire?.categorie?.nom ?? '—' }}</span></div>
+            <div class="info-line"><i class="bi bi-geo-alt"></i><span>{{ (u.gouvernorat | gouv) || '—' }}</span></div>
+            <app-star-rating [value]="u.prestataire?.note_moyenne ?? 0" [showValue]="true" />
+            <ng-container *ngTemplateOutlet="badges; context: { $implicit: u }" />
+          </div>
+          <div class="card-footer">
+            <ng-container *ngTemplateOutlet="actions; context: { $implicit: u }" />
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<ng-template #badges let-u>
+  <div class="row badges">
+    @if (u.prestataire?.validation_status; as vs) {
+      <span class="badge" [class]="'badge ' + validationClasses[vs]">{{ 'admin.prestataires.validation.' + vs | t }}</span>
+    }
+    @if (u.statut === 'bloque') {
+      <span class="badge badge-danger"><i class="bi bi-slash-circle"></i> {{ 'admin.shared.blocked' | t }}</span>
+    } @else if (u.statut === 'suspendu') {
+      <span class="badge badge-warning"><i class="bi bi-pause-circle"></i> {{ 'admin.shared.suspended' | t }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #actions let-u>
+  <div class="row act">
+    @if (u.prestataire?.validation_status === 'en_attente') {
+      <button type="button" class="btn btn-success btn-sm" [disabled]="busy() === u.id" (click)="valider(u)"><i class="bi bi-check-lg"></i> {{ 'admin.shared.validate' | t }}</button>
+      <button type="button" class="btn btn-outline btn-sm" [disabled]="busy() === u.id" (click)="refusing.set(u)"><i class="bi bi-x-lg"></i> {{ 'admin.shared.refuse' | t }}</button>
+    }
+    @if (u.is_blocked) {
+      <button type="button" class="btn btn-outline btn-sm" [disabled]="busy() === u.id" (click)="debloquer(u)"><i class="bi bi-unlock"></i> {{ 'admin.shared.unblock' | t }}</button>
+    } @else {
+      <button type="button" class="btn btn-danger btn-sm" [disabled]="busy() === u.id" (click)="blocking.set(u)"><i class="bi bi-slash-circle"></i> {{ 'admin.shared.block' | t }}</button>
+    }
+  </div>
+</ng-template>
+
+@if (blocking(); as u) {
+  <app-block-user-modal [user]="u" (blocked)="onBlocked($event)" (closed)="blocking.set(null)" />
+}
+@if (refusing(); as u) {
+  <app-refus-modal [nom]="u.nom" [busy]="busy() === u.id" (confirmed)="refuser(u, $event)" (closed)="refusing.set(null)" />
+}

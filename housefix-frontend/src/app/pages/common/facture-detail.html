@@ -1,0 +1,257 @@
+<div class="page">
+  <div class="page-header">
+    <button type="button" class="btn btn-ghost" (click)="back()"><i class="bi bi-arrow-left"></i> {{ 'common.actions.back' | t }}</button>
+    @if (facture(); as f) {
+      <div class="row">
+        <button type="button" class="btn btn-outline" (click)="pdf()" [disabled]="downloading()">
+          <i class="bi bi-file-earmark-arrow-down"></i> {{ (downloading() ? 'pages.factureDetail.downloading' : 'pages.factureDetail.downloadPdf') | t }}
+        </button>
+        @if (canPay()) {
+          <button type="button" class="btn btn-primary" (click)="openPay()"><i class="bi bi-credit-card"></i> {{ 'pages.factureDetail.pay' | t }}</button>
+        }
+        @if (canRecordCash()) {
+          <button type="button" class="btn btn-success" (click)="cashAction('record')" [disabled]="cashBusy()">
+            <i class="bi bi-cash-coin"></i> {{ 'pages.factureDetail.recordCash' | t }}
+          </button>
+        }
+        @if (canConfirm()) {
+          <button type="button" class="btn btn-outline" (click)="cashAction('reject')" [disabled]="cashBusy()">
+            <i class="bi bi-x-circle"></i> {{ 'pages.factureDetail.rejectCash' | t }}
+          </button>
+          <button type="button" class="btn btn-success" (click)="cashAction('confirm')" [disabled]="cashBusy()">
+            <i class="bi bi-cash-coin"></i> {{ 'pages.factureDetail.confirmCash' | t }}
+          </button>
+        }
+        @if (canCancelCash()) {
+          <button type="button" class="btn btn-outline" (click)="cashAction('cancel')" [disabled]="cashBusy()">
+            <i class="bi bi-arrow-counterclockwise"></i> {{ 'pages.factureDetail.cancelCash' | t }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (notFound()) {
+    <div class="card empty-state">
+      <i class="bi bi-receipt"></i>
+      {{ notFound() }}
+    </div>
+  } @else if (facture(); as f) {
+    @if (role() === 'client' && f.statut_paiement === 'en_attente') {
+      <div class="alert alert-warning">
+        <i class="bi bi-hourglass-split"></i> {{ 'pages.factureDetail.alertClientPending' | t }}
+      </div>
+    }
+    @if (role() === 'prestataire' && f.statut_paiement === 'en_attente') {
+      <div class="alert alert-warning">
+        <i class="bi bi-cash-coin"></i> {{ 'pages.factureDetail.alertPrestatairePending' | t }}
+      </div>
+    }
+    @if (canRecordCash()) {
+      <div class="alert">
+        <i class="bi bi-info-circle"></i> {{ 'pages.factureDetail.recordCashHint' | t }}
+      </div>
+    }
+
+    <div class="card invoice">
+      <div class="invoice-head">
+        <div class="brand">
+          <span class="brand-icon"><i class="bi bi-house-gear-fill"></i></span>
+          <div>
+            <strong>DarFix</strong>
+            <span class="muted small">{{ 'pages.factureDetail.platform' | t }}</span>
+          </div>
+        </div>
+        <div class="invoice-meta">
+          <span class="chip">{{ 'pages.factureDetail.invoice' | t }}</span>
+          <h2>{{ f.numero }}</h2>
+          <span class="muted">{{ 'pages.factureDetail.issuedOn' | t: { date: (f.date | appDate: 'long') } }}</span>
+          <app-status-badge [status]="f.statut_paiement" kind="paiement" />
+        </div>
+      </div>
+
+      <div class="parties">
+        <div class="party">
+          <span class="party-label">{{ 'common.roles.client' | t }}</span>
+          <strong>{{ rdv()?.client?.nom ?? '—' }}</strong>
+          @if (rdv()?.client?.telephone) {
+            <span class="muted"><i class="bi bi-telephone"></i> <bdi dir="ltr">{{ rdv()?.client?.telephone }}</bdi></span>
+          }
+          @if (rdv()?.address) {
+            <span class="muted"><i class="bi bi-geo-alt"></i> {{ rdv()?.address }}</span>
+          }
+        </div>
+        <div class="party">
+          <span class="party-label">{{ 'common.roles.prestataire' | t }}</span>
+          <strong>{{ rdv()?.prestataire?.nom ?? '—' }}</strong>
+          @if (rdv()?.prestataire?.telephone) {
+            <span class="muted"><i class="bi bi-telephone"></i> <bdi dir="ltr">{{ rdv()?.prestataire?.telephone }}</bdi></span>
+          }
+          @if (rdv()?.categorie) {
+            <span class="muted"><i class="bi bi-tools"></i> {{ rdv()?.categorie?.nom }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ 'pages.factureDetail.designation' | t }}</th>
+              <th>{{ 'pages.factureDetail.intervention' | t }}</th>
+              <th class="text-right">{{ 'pages.factureDetail.amountHt' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>{{ rdv()?.categorie?.nom ?? ('pages.factureDetail.defaultService' | t) }}</strong>
+                @if (f.details) {
+                  <div class="muted small details">{{ f.details }}</div>
+                }
+                @if (rdv()?.description) {
+                  <div class="muted small">{{ 'pages.factureDetail.request' | t: { description: rdv()?.description } }}</div>
+                }
+              </td>
+              <td class="nowrap">
+                @if (rdv(); as r) {
+                  {{ r.date | appDate: 'date' }}@if (r.heure) { {{ 'pages.factureDetail.atTime' | t: { heure: r.heure } }} }
+                  <div class="muted small">{{ 'pages.factureDetail.rdvRef' | t: { id: r.id } }}</div>
+                } @else {
+                  {{ 'pages.factureDetail.rdvRef' | t: { id: f.rendez_vous_id } }}
+                }
+              </td>
+              <td class="text-right nowrap"><strong>{{ f.montant_ht | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <dl class="subtotals">
+        <div><dt>{{ 'pages.factureDetail.totalHt' | t }}</dt><dd>{{ f.montant_ht | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</dd></div>
+        <div><dt>{{ 'pages.factureDetail.vat' | t: { taux: (f.taux_tva | appNumber: '1.0-2') } }}</dt><dd>{{ f.montant_tva | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</dd></div>
+      </dl>
+      <div class="total">
+        <span>{{ 'pages.factureDetail.totalDue' | t }}</span>
+        <strong>{{ f.montant | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</strong>
+      </div>
+
+      @if (f.statut_paiement === 'payee') {
+        <div class="alert alert-success">
+          <i class="bi bi-check-circle-fill"></i>
+          {{ (f.mode_paiement ? (f.mode_paiement === 'en_ligne' ? 'pages.factureDetail.settledOnline' : 'pages.factureDetail.settledCash') : 'pages.factureDetail.settled') | t }}
+          @if (f.paid_at) { {{ 'pages.factureDetail.settledOn' | t: { date: (f.paid_at | appDate: 'longtime') } }} }.
+        </div>
+      }
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>{{ 'pages.factureDetail.history.title' | t }}</h3>
+      </div>
+      @if (!f.paiements?.length) {
+        <div class="empty-state"><i class="bi bi-wallet2"></i> {{ 'pages.factureDetail.history.empty' | t }}</div>
+      } @else {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>{{ 'pages.factureDetail.history.reference' | t }}</th>
+                <th>{{ 'pages.factureDetail.history.date' | t }}</th>
+                <th>{{ 'pages.factureDetail.history.mode' | t }}</th>
+                <th class="text-right">{{ 'pages.factureDetail.history.amount' | t }}</th>
+                <th>{{ 'pages.factureDetail.history.status' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of f.paiements; track p.id) {
+                <tr>
+                  <td><code>{{ p.reference }}</code></td>
+                  <td class="nowrap">{{ p.created_at | appDate: 'datetime' }}</td>
+                  <td class="nowrap">
+                    <i class="bi" [class.bi-credit-card]="p.mode === 'en_ligne'" [class.bi-cash]="p.mode === 'especes'"></i>
+                    {{ 'pages.factureDetail.modes.' + p.mode | t }}
+                  </td>
+                  <td class="text-right nowrap">{{ p.montant | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</td>
+                  <td><span class="badge" [class]="'badge ' + paiementStatut[p.statut].css">{{ 'pages.factureDetail.paiementStatut.' + p.statut | t }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    @if (payOpen()) {
+      <div class="modal-backdrop" (click)="closePay()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <h3>{{ 'pages.factureDetail.modal.title' | t: { numero: f.numero } }}</h3>
+          <p class="muted">{{ 'pages.factureDetail.modal.amount' | t }} <strong>{{ f.montant | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</strong></p>
+
+          <div class="modes">
+            <button type="button" class="mode" [class.active]="mode() === 'en_ligne'" (click)="mode.set('en_ligne')">
+              <i class="bi bi-credit-card-2-front"></i>
+              <strong>{{ 'pages.factureDetail.modal.online' | t }}</strong>
+              <span class="muted small">{{ 'pages.factureDetail.modal.card' | t }}</span>
+            </button>
+            <button type="button" class="mode" [class.active]="mode() === 'especes'" (click)="mode.set('especes')">
+              <i class="bi bi-cash-stack"></i>
+              <strong>{{ 'pages.factureDetail.modal.cash' | t }}</strong>
+              <span class="muted small">{{ 'pages.factureDetail.modal.cashSub' | t }}</span>
+            </button>
+          </div>
+
+          @if (payError()) {
+            <div class="alert alert-danger"><i class="bi bi-x-octagon"></i> {{ payError() }}</div>
+          }
+
+          @if (mode() === 'en_ligne') {
+            <form (ngSubmit)="pay()" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="card_name">{{ 'pages.factureDetail.modal.cardName' | t }}</label>
+                <input id="card_name" class="form-control" [class.invalid]="cardErrors()['card_name']" name="card_name" [(ngModel)]="card.name" autocomplete="cc-name" />
+                @if (cardErrors()['card_name']) { <span class="form-error">{{ cardErrors()['card_name'] }}</span> }
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="card_number">{{ 'pages.factureDetail.modal.cardNumber' | t }}</label>
+                <input id="card_number" class="form-control" dir="ltr" [class.invalid]="cardErrors()['card_number']" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" [value]="card.number" (input)="onCardNumber($event)" />
+                @if (cardErrors()['card_number']) { <span class="form-error">{{ cardErrors()['card_number'] }}</span> }
+              </div>
+              <div class="grid-2 card-row">
+                <div class="form-group">
+                  <label class="form-label" for="expiry">{{ 'pages.factureDetail.modal.expiry' | t }}</label>
+                  <input id="expiry" class="form-control" dir="ltr" [class.invalid]="cardErrors()['expiry']" inputmode="numeric" autocomplete="cc-exp" [placeholder]="'pages.factureDetail.modal.expiryPlaceholder' | t" [value]="card.expiry" (input)="onExpiry($event)" />
+                  @if (cardErrors()['expiry']) { <span class="form-error">{{ cardErrors()['expiry'] }}</span> }
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cvv">{{ 'pages.factureDetail.modal.cvv' | t }}</label>
+                  <input id="cvv" class="form-control" dir="ltr" [class.invalid]="cardErrors()['cvv']" inputmode="numeric" autocomplete="cc-csc" placeholder="123" [value]="card.cvv" (input)="onCvv($event)" />
+                  @if (cardErrors()['cvv']) { <span class="form-error">{{ cardErrors()['cvv'] }}</span> }
+                </div>
+              </div>
+              <span class="form-hint"><i class="bi bi-info-circle"></i> {{ 'pages.factureDetail.modal.simulated' | t }}</span>
+            </form>
+          } @else {
+            <div class="alert">
+              <i class="bi bi-info-circle"></i>
+              {{ 'pages.factureDetail.modal.cashInfo' | t }}
+            </div>
+          }
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" (click)="closePay()" [disabled]="paying()">{{ 'common.actions.cancel' | t }}</button>
+            <button type="button" class="btn btn-primary" (click)="pay()" [disabled]="paying()">
+              @if (paying()) { {{ 'pages.factureDetail.modal.processing' | t }} } @else if (mode() === 'en_ligne') {
+                <i class="bi bi-lock-fill"></i> {{ 'pages.factureDetail.modal.payAmount' | t: { amount: (f.montant | appNumber: '1.2-2') } }}
+              } @else {
+                <i class="bi bi-check2"></i> {{ 'pages.factureDetail.modal.declareCash' | t }}
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

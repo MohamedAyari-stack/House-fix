@@ -1,0 +1,211 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ---------- En-tête ---------- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 64px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--text);
+  text-decoration: none;
+}
+.brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Mise en page ---------- */
+.page {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+  padding-top: 40px;
+  padding-bottom: 64px;
+}
+
+.toc {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  font-size: 13px;
+}
+.toc summary {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+.toc ol {
+  margin: 0;
+  padding-inline-start: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-muted);
+}
+.toc a {
+  color: var(--text-muted);
+  text-decoration: none;
+  line-height: 1.4;
+}
+.toc a:hover,
+.toc a:focus-visible {
+  color: var(--primary);
+}
+
+/* ---------- Document ---------- */
+.doc {
+  max-width: 72ch;
+  line-height: 1.7;
+}
+.doc-head {
+  padding-bottom: 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.doc h1 {
+  font-family: "Poppins", sans-serif;
+  font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.intro {
+  margin: 16px 0 0;
+  font-size: 16px;
+}
+section {
+  padding-top: 24px;
+  scroll-margin-top: 84px;
+}
+.doc h2 {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.num {
+  color: var(--primary);
+}
+.doc p,
+.doc ul {
+  margin: 0 0 12px;
+}
+.doc ul {
+  padding-inline-start: 22px;
+}
+.doc li + li {
+  margin-top: 6px;
+}
+
+.doc-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.doc-foot a {
+  font-weight: 600;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-top: 24px;
+  }
+  .toc {
+    position: static;
+    max-height: none;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+  }
+  .toc summary {
+    margin-bottom: 0;
+  }
+  .toc details[open] summary {
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-actions app-theme-toggle {
+    display: none;
+  }
+}
+
+/* ---------- Impression ---------- */
+@media print {
+  .nav,
+  .toc,
+  .meta button,
+  .doc-foot {
+    display: none;
+  }
+  .page {
+    display: block;
+    padding: 0;
+  }
+  .doc {
+    max-width: none;
+  }
+}

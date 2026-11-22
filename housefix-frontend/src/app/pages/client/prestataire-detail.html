@@ -1,0 +1,114 @@
+<div class="page">
+  <div>
+    <button type="button" class="btn btn-ghost" (click)="location.back()"><i class="bi bi-arrow-left"></i> {{ 'common.actions.back' | t }}</button>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (error()) {
+    <div class="card empty-state"><i class="bi bi-person-x"></i> {{ error() }}</div>
+  } @else if (presta(); as p) {
+    <div class="card profile">
+      <app-avatar [nom]="p.nom" [photoUrl]="p.photo_url" size="lg" />
+      <div class="identity">
+        <div class="row">
+          <h2>{{ p.nom }}</h2>
+          @if (p.is_recommended) { <app-reco-badge /> }
+          @if (p.prestataire?.is_available) {
+            <span class="badge badge-success"><i class="bi bi-circle-fill dot"></i> {{ 'client.shared.available' | t }}</span>
+          } @else {
+            <span class="badge badge-danger"><i class="bi bi-circle-fill dot"></i> {{ 'client.shared.unavailable' | t }}</span>
+          }
+        </div>
+        @if (p.prestataire?.specialite) { <span class="specialite">{{ p.prestataire?.specialite }}</span> }
+        <div class="row muted small">
+          @if (p.prestataire?.categorie) { <span><i class="bi bi-tools"></i> {{ p.prestataire?.categorie?.nom }}</span> }
+          @if (p.gouvernorat) { <span><i class="bi bi-geo-alt"></i> {{ p.gouvernorat | gouv }}</span> }
+        </div>
+        <div class="row">
+          <app-star-rating [value]="p.prestataire?.note_moyenne ?? 0" [showValue]="true" />
+          <span class="muted small">({{ 'common.units.reviews' | t: { count: p.prestataire?.nb_avis ?? 0 } }})</span>
+        </div>
+      </div>
+      <div class="actions">
+        <a
+          class="btn btn-primary"
+          routerLink="/client/rendez-vous/nouveau"
+          [queryParams]="{ prestataire: p.id, categorie: p.prestataire?.categorie_service_id }"
+        ><i class="bi bi-calendar-plus"></i> {{ 'client.shared.takeRdv' | t }}</a>
+        <a class="btn btn-outline" routerLink="/client/messages" [queryParams]="{ user: p.id }">
+          <i class="bi bi-chat-dots"></i> {{ 'client.prestataireDetail.sendMessage' | t }}
+        </a>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><h3><i class="bi bi-person-lines-fill"></i> {{ 'client.prestataireDetail.about' | t }}</h3></div>
+        <p class="description">{{ p.prestataire?.description || ('client.prestataireDetail.noDescription' | t) }}</p>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="bi bi-info-circle"></i> {{ 'client.prestataireDetail.infos' | t }}</h3></div>
+        <div class="infos">
+          <div class="info">
+            <span class="info-icon"><i class="bi bi-award"></i></span>
+            <div><span class="muted small">{{ 'client.prestataireDetail.experience' | t }}</span><strong>{{ p.prestataire?.experience_annees != null ? (((p.prestataire?.experience_annees ?? 0) > 1 ? 'client.prestataireDetail.yearsOther' : 'client.prestataireDetail.yearsOne') | t: { count: p.prestataire?.experience_annees }) : ('client.prestataireDetail.notProvidedF' | t) }}</strong></div>
+          </div>
+          <div class="info">
+            <span class="info-icon"><i class="bi bi-cash-coin"></i></span>
+            <div><span class="muted small">{{ 'client.prestataireDetail.tarif' | t }}</span><strong>{{ p.prestataire?.tarif_horaire != null ? (p.prestataire?.tarif_horaire | appNumber: '1.0-2') + ' ' + ('common.units.perHour' | t) : ('client.prestataireDetail.onQuote' | t) }}</strong></div>
+          </div>
+          <div class="info">
+            <span class="info-icon"><i class="bi bi-patch-check"></i></span>
+            <div><span class="muted small">{{ 'client.prestataireDetail.certifications' | t }}</span><strong>{{ p.prestataire?.certifications || ('client.prestataireDetail.none' | t) }}</strong></div>
+          </div>
+          <div class="info">
+            <span class="info-icon"><i class="bi bi-clock"></i></span>
+            <div><span class="muted small">{{ 'client.prestataireDetail.disponibilites' | t }}</span><strong>{{ p.prestataire?.disponibilites || ('client.prestataireDetail.notProvidedFPl' | t) }}</strong></div>
+          </div>
+          <div class="info">
+            <span class="info-icon"><i class="bi bi-telephone"></i></span>
+            <div>
+              <span class="muted small">{{ 'client.prestataireDetail.telephone' | t }}</span>
+              @if (p.telephone) { <a [href]="'tel:' + p.telephone"><strong>{{ p.telephone }}</strong></a> } @else { <strong>{{ 'client.prestataireDetail.notProvidedM' | t }}</strong> }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="bi bi-chat-square-quote"></i> {{ 'client.prestataireDetail.reviewsTitle' | t }}</h3>
+        <span class="muted small">{{ 'common.units.reviews' | t: { count: p.evaluations.length } }}</span>
+      </div>
+      @if (p.evaluations.length === 0) {
+        <div class="empty-state"><i class="bi bi-star"></i> {{ 'client.prestataireDetail.reviewsEmpty' | t }}</div>
+      } @else {
+        <div class="reviews">
+          @for (e of p.evaluations; track e.id) {
+            <div class="review">
+              <div class="row-between">
+                <div class="row">
+                  <app-avatar [nom]="e.client?.nom" [photoUrl]="e.client?.photo_url" />
+                  <div class="col">
+                    <strong>{{ e.client?.nom ?? ('client.prestataireDetail.client' | t) }}</strong>
+                    <span class="muted small">{{ e.created_at | appDate: 'long' }}</span>
+                  </div>
+                </div>
+                <app-star-rating [value]="e.note" />
+              </div>
+              @if (e.commentaire) { <p class="comment">{{ e.commentaire }}</p> }
+              @if (e.reponse) {
+                <div class="reply">
+                  <strong><i class="bi bi-reply-fill"></i> {{ 'client.prestataireDetail.replyFrom' | t: { name: p.nom } }}</strong>
+                  <p>{{ e.reponse }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

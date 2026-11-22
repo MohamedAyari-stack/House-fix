@@ -1,0 +1,84 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <span class="chip">{{ 'client.evaluations.chip' | t }}</span>
+      <p>{{ 'client.evaluations.intro' | t }}</p>
+    </div>
+    @if (evaluations().length) {
+      <div class="summary">
+        <app-star-rating [value]="moyenne()" [showValue]="true" />
+        <span class="muted small">{{ (evaluations().length > 1 ? 'client.evaluations.averageOther' : 'client.evaluations.averageOne') | t: { count: evaluations().length } }}</span>
+      </div>
+    }
+  </div>
+
+  <section class="card">
+    <div class="card-header">
+      <h3><i class="bi bi-hourglass-split"></i> {{ 'client.evaluations.toEvaluate' | t }}</h3>
+      @if (aEvaluer().length) { <span class="badge badge-warning">{{ aEvaluer().length }}</span> }
+    </div>
+    @if (loadingRdv() || loadingEval()) {
+      <div class="spinner"></div>
+    } @else if (aEvaluer().length === 0) {
+      <div class="empty-state"><i class="bi bi-check2-all"></i> {{ 'client.evaluations.allDone' | t }}</div>
+    } @else {
+      <div class="todo-list">
+        @for (r of aEvaluer(); track r.id) {
+          <div class="todo">
+            <app-avatar [nom]="r.prestataire.nom" [photoUrl]="r.prestataire.photo_url" />
+            <div class="todo-info">
+              <strong>{{ r.prestataire.nom }}</strong>
+              <span class="muted small">{{ r.categorie.nom }} · {{ r.date | appDate: 'date' }} · {{ 'client.shared.rdvRef' | t: { id: r.id } }}</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" (click)="rating.set(r)"><i class="bi bi-star"></i> {{ 'client.shared.evaluate' | t }}</button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="stack">
+    <h3>{{ 'client.evaluations.mine' | t }}</h3>
+    @if (loadingEval()) {
+      <div class="spinner"></div>
+    } @else if (evaluations().length === 0) {
+      <div class="card empty-state"><i class="bi bi-chat-square-heart"></i> {{ 'client.evaluations.empty' | t }}</div>
+    } @else {
+      <div class="grid-2">
+        @for (e of evaluations(); track e.id) {
+          <div class="card review">
+            <div class="row-between">
+              <div class="row who">
+                <app-avatar [nom]="e.prestataire?.nom" [photoUrl]="e.prestataire?.photo_url" />
+                <div class="col">
+                  <a [routerLink]="['/client/prestataires', e.prestataire_id]"><strong>{{ e.prestataire?.nom ?? ('client.shared.prestataire' | t) }}</strong></a>
+                  <span class="muted small">{{ e.created_at | appDate: 'long' }}</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-ghost btn-sm" (click)="editing.set(e)"><i class="bi bi-pencil"></i> {{ 'common.actions.edit' | t }}</button>
+            </div>
+            <app-star-rating [value]="e.note" />
+            @if (e.commentaire) {
+              <p class="comment">{{ e.commentaire }}</p>
+            } @else {
+              <p class="muted small"><em>{{ 'client.evaluations.noComment' | t }}</em></p>
+            }
+            @if (e.reponse) {
+              <div class="reply">
+                <strong><i class="bi bi-reply-fill"></i> {{ 'client.evaluations.reply' | t }}</strong>
+                <p>{{ e.reponse }}</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>
+
+@if (rating(); as r) {
+  <app-evaluation-modal [rdv]="r" (saved)="onCreated(r, $event)" (closed)="rating.set(null)" />
+}
+@if (editing(); as e) {
+  <app-evaluation-modal [evaluation]="e" (saved)="onUpdated($event)" (closed)="editing.set(null)" />
+}

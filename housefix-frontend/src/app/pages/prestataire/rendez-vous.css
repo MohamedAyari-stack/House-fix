@@ -1,0 +1,78 @@
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-inline-start: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.count.hot {
+  background: var(--warning);
+  color: #fff;
+}
+
+.rdv-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  gap: 10px;
+}
+
+.lbl {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.d-block {
+  display: block;
+}
+
+.grow {
+  flex: 1;
+}
+
+.mini {
+  padding: 3px 8px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.card-footer {
+  align-items: center;
+}
+
+a.badge {
+  text-decoration: none;
+}
+
+.full {
+  grid-column: 1/-1;
+}
+
+.mb {
+  margin-bottom: 12px;
+}
+
+.tva-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}

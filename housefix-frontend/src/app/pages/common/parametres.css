@@ -1,0 +1,41 @@
+.identity {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.position {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.availability {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.lang-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.end {
+  justify-content: flex-end;
+}
+
+.form-control:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

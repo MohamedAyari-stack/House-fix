@@ -1,0 +1,61 @@
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" routerLink="/" [attr.aria-label]="'legal.backHome' | t">
+      <span class="brand-icon"><i class="bi bi-house-gear-fill"></i></span>
+      <span>DarFix</span>
+    </a>
+    <div class="nav-actions">
+      <app-lang-switch />
+      <app-theme-toggle />
+    </div>
+  </div>
+</header>
+
+<main class="wrap page">
+  <aside class="toc">
+    <details open>
+      <summary>{{ 'legal.toc' | t }}</summary>
+      <ol>
+        @for (s of content().sections; track s.id) {
+          <li><a [href]="'#' + s.id" (click)="goTo($event, s.id)">{{ s.title }}</a></li>
+        }
+      </ol>
+    </details>
+  </aside>
+
+  <article class="doc">
+    <header class="doc-head">
+      <h1>{{ content().title }}</h1>
+      <div class="meta">
+        <span>{{ 'legal.updated' | t: { date: (updated | appDate: 'long') } }}</span>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="print()">
+          <i class="bi bi-printer"></i> {{ 'legal.print' | t }}
+        </button>
+      </div>
+      <p class="intro">{{ content().intro }}</p>
+    </header>
+
+    @for (s of content().sections; track s.id; let i = $index) {
+      <section [id]="s.id">
+        <h2><span class="num">{{ i + 1 }}.</span> {{ s.title }}</h2>
+        @for (block of s.body; track $index) {
+          @if (isList(block)) {
+            <ul>
+              @for (item of block; track $index) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          } @else {
+            <p>{{ block }}</p>
+          }
+        }
+      </section>
+    }
+
+    <footer class="doc-foot">
+      <span>{{ 'legal.seeAlso' | t }} :</span>
+      <a [routerLink]="other().path">{{ other().label | t }}</a>
+      <a routerLink="/"><i class="bi bi-arrow-left"></i> {{ 'legal.backHome' | t }}</a>
+    </footer>
+  </article>
+</main>

@@ -1,0 +1,93 @@
+/** Pages publiques des services (/services et /services/:slug), en-tête et pied de page publics. */
+export const services = {
+  nav: {
+    home: 'Accueil',
+    services: 'Services',
+    howItWorks: 'Comment ça marche',
+    login: 'Se connecter',
+    register: 'Créer un compte',
+    menu: 'Ouvrir le menu',
+  },
+  index: {
+    eyebrow: 'Services',
+    title: 'Tous nos services à domicile',
+    intro:
+      'Des prestataires vérifiés pour chaque besoin de la maison, partout en Tunisie. Comparez les tarifs et les avis, puis réservez en ligne.',
+    providersOne: '{count} prestataire',
+    providersOther: '{count} prestataires',
+    from: 'dès {price} DT/h',
+    soon: 'Bientôt disponible',
+    see: 'Voir le service',
+    metaTitle: 'Services à domicile en Tunisie — DarFix',
+    metaDescription:
+      'Plomberie, électricité, climatisation, serrurerie et plus : trouvez un prestataire vérifié près de chez vous et réservez en ligne sur DarFix.',
+  },
+  page: {
+    titleIn: '{service} à {ville}',
+    titleAll: '{service} en Tunisie',
+    lead: 'Trouvez un professionnel vérifié, comparez les avis et les tarifs, et réservez votre intervention en ligne.',
+    book: 'Réserver',
+    bookService: 'Réserver un professionnel',
+    where: 'Où ?',
+    allTunisia: 'Toute la Tunisie',
+    stats: {
+      providers: 'Prestataires',
+      availableOne: '{count} disponible maintenant',
+      availableOther: '{count} disponibles maintenant',
+      rating: 'Note moyenne',
+      reviewsOne: 'sur {count} avis',
+      reviewsOther: 'sur {count} avis',
+      noRating: 'Pas encore d’avis',
+      jobs: 'Interventions réalisées',
+      price: 'Tarif horaire',
+      priceRange: '{min} – {max} DT/h',
+      priceSingle: '{min} DT/h',
+      priceMedian: 'tarif médian : {median} DT/h',
+    },
+    pros: {
+      title: 'Prestataires recommandés',
+      empty: 'Aucun prestataire pour ce service dans ce gouvernorat pour le moment.',
+      seeAll: 'Voir toute la Tunisie',
+      experience: '{count} ans d’expérience',
+      new: 'Nouveau',
+      available: 'Disponible',
+      unavailable: 'Indisponible',
+      perHour: '{price} DT/h',
+    },
+    reviews: {
+      title: 'Ce que disent les clients',
+    },
+    faq: {
+      title: 'Questions fréquentes',
+      priceQ: 'Combien coûte un service de {service} {lieu} ?',
+      priceA:
+        'Sur DarFix, le tarif horaire des prestataires va de {min} à {max} DT/h, avec un tarif médian de {median} DT/h. Le montant final figure sur la facture émise après l’intervention.',
+      priceASingle:
+        'Sur DarFix, le tarif horaire est de {min} DT/h. Le montant final figure sur la facture émise après l’intervention.',
+      priceNone: 'Les tarifs seront affichés dès que des prestataires seront disponibles {lieu}.',
+      verifiedQ: 'Les prestataires sont-ils vérifiés ?',
+      verifiedA:
+        'Oui. Chaque compte prestataire est examiné par l’équipe DarFix avant d’apparaître dans les recherches, et les avis ne peuvent être laissés que par des clients dont l’intervention est terminée.',
+      bookQ: 'Comment réserver ?',
+      bookA:
+        'Créez un compte gratuit, choisissez un prestataire, indiquez la date, l’adresse et votre besoin. Le prestataire confirme ou propose un autre horaire.',
+      payQ: 'Comment payer ?',
+      payA: 'Après l’intervention, vous réglez la facture en ligne par carte bancaire ou en espèces auprès du prestataire.',
+      inCity: 'à {ville}',
+      inTunisia: 'en Tunisie',
+      videoLabel: 'Vidéo de démonstration : {question}',
+      videoNote: 'Démonstration filmée sur DarFix.',
+    },
+    others: 'Autres services',
+    notFound: 'Ce service n’existe pas ou n’est plus proposé.',
+    backToServices: 'Voir tous les services',
+    metaDescriptionIn: '{service} à {ville} : prestataires vérifiés, avis clients et tarifs. Réservez votre intervention en ligne sur DarFix.',
+    metaDescriptionAll: '{service} en Tunisie : prestataires vérifiés, avis clients et tarifs. Réservez votre intervention en ligne sur DarFix.',
+  },
+  footer: {
+    allServices: 'Tous les services',
+    privacy: 'Confidentialité',
+    terms: 'Conditions d’utilisation',
+    copyright: '© {year} DarFix. Services à domicile en Tunisie.',
+  },
+};

@@ -1,0 +1,135 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>{{ 'admin.utilisateurs.title' | t }}</h2>
+      <p>{{ 'admin.utilisateurs.subtitle' | t }}</p>
+    </div>
+    <div class="search">
+      <i class="bi bi-search"></i>
+      <input
+        type="search"
+        class="form-control"
+        [placeholder]="'admin.utilisateurs.searchPlaceholder' | t"
+        [ngModel]="query()"
+        (ngModelChange)="onSearch($event)"
+        [attr.aria-label]="'admin.utilisateurs.searchAria' | t"
+      />
+    </div>
+  </div>
+
+  <div class="tabs">
+    @for (t of roleTabs; track t.key) {
+      <button type="button" [class.active]="role() === t.key" (click)="setRole(t.key)">{{ 'admin.utilisateurs.tabs.' + t.label | t }}</button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (items().length === 0) {
+    <div class="card empty-state">
+      <i class="bi bi-people"></i>
+      {{ 'admin.utilisateurs.empty' | t }}
+    </div>
+  } @else {
+    <div class="card desktop">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ 'admin.utilisateurs.colUser' | t }}</th>
+              <th>{{ 'admin.utilisateurs.colRole' | t }}</th>
+              <th>{{ 'admin.shared.phone' | t }}</th>
+              <th>{{ 'admin.shared.gouvernorat' | t }}</th>
+              <th>{{ 'admin.shared.status' | t }}</th>
+              <th>{{ 'admin.utilisateurs.colRegistered' | t }}</th>
+              <th class="text-right">{{ 'admin.shared.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of items(); track u.id) {
+              <tr>
+                <td>
+                  <div class="row nowrap-row">
+                    <app-avatar [nom]="u.nom" [photoUrl]="u.photo_url" />
+                    <div class="ident">
+                      <strong>{{ u.nom }}</strong>
+                      @if (u.id === meId) { <span class="small muted">{{ 'admin.utilisateurs.you' | t }}</span> }
+                      <div class="small muted">{{ u.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge" [class]="'badge ' + roleClasses[u.role]">{{ roleLabel(u.role) }}</span></td>
+                <td class="nowrap">{{ u.telephone ?? '—' }}</td>
+                <td>{{ (u.gouvernorat | gouv) || '—' }}</td>
+                <td><ng-container *ngTemplateOutlet="statutTpl; context: { $implicit: u }" /></td>
+                <td class="nowrap">{{ u.created_at | appDate: 'date' }}</td>
+                <td class="text-right"><ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: u }" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mobile stack">
+      @for (u of items(); track u.id) {
+        <div class="card">
+          <div class="row-between">
+            <div class="row nowrap-row">
+              <app-avatar [nom]="u.nom" [photoUrl]="u.photo_url" />
+              <div class="ident">
+                <strong>{{ u.nom }}</strong>
+                <div class="small muted">{{ u.email }}</div>
+              </div>
+            </div>
+            <span class="badge" [class]="'badge ' + roleClasses[u.role]">{{ roleLabel(u.role) }}</span>
+          </div>
+          <div class="stack m-body">
+            <div class="info-line"><i class="bi bi-telephone"></i><span>{{ u.telephone ?? '—' }}</span></div>
+            <div class="info-line"><i class="bi bi-geo-alt"></i><span>{{ (u.gouvernorat | gouv) || '—' }}</span></div>
+            <div class="info-line"><i class="bi bi-calendar-plus"></i><span>{{ 'admin.shared.registeredOn' | t: { date: (u.created_at | appDate: 'date') } }}</span></div>
+            <ng-container *ngTemplateOutlet="statutTpl; context: { $implicit: u }" />
+          </div>
+          @if (u.id !== meId) {
+            <div class="card-footer">
+              <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: u }" />
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<ng-template #statutTpl let-u>
+  @switch (u.statut) {
+    @case ('suspendu') {
+      <span class="badge badge-warning" [title]="u.block_motif ?? ''">
+        {{ 'admin.utilisateurs.suspendedUntil' | t: { date: (u.blocked_until | appDate: 'date') } }}
+      </span>
+    }
+    @case ('bloque') {
+      <span class="badge badge-danger" [title]="u.block_motif ?? ''">{{ 'admin.shared.blocked' | t }}</span>
+    }
+    @default {
+      <span class="badge badge-success">{{ 'admin.utilisateurs.active' | t }}</span>
+    }
+  }
+</ng-template>
+
+<ng-template #actionsTpl let-u>
+  @if (u.id !== meId) {
+    <div class="row act">
+      @if (u.is_blocked) {
+        <button type="button" class="btn btn-outline btn-sm" [disabled]="busy() === u.id" (click)="debloquer(u)"><i class="bi bi-unlock"></i> {{ 'admin.shared.unblock' | t }}</button>
+      } @else {
+        <button type="button" class="btn btn-outline btn-sm" [disabled]="busy() === u.id" (click)="blocking.set(u)"><i class="bi bi-slash-circle"></i> {{ 'admin.shared.block' | t }}</button>
+      }
+      <button type="button" class="btn btn-danger btn-sm" [disabled]="busy() === u.id" (click)="supprimer(u)"><i class="bi bi-trash"></i> {{ 'common.actions.delete' | t }}</button>
+    </div>
+  }
+</ng-template>
+
+@if (blocking(); as u) {
+  <app-block-user-modal [user]="u" (blocked)="onBlocked($event)" (closed)="blocking.set(null)" />
+}

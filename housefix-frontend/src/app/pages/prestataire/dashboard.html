@@ -1,0 +1,134 @@
+<div class="page">
+  <section class="hero">
+    <div>
+      <span class="chip">{{ 'prestataire.dashboard.space' | t }}</span>
+      <h1 class="mt">{{ 'prestataire.dashboard.welcome' | t: { nom: user()?.nom ?? '' } }}</h1>
+      <p>{{ 'prestataire.dashboard.subtitle' | t }}</p>
+    </div>
+    <div class="availability">
+      <span class="pill" [class.off]="!available()">
+        <span class="dot">●</span> {{ (available() ? 'prestataire.dashboard.available' : 'prestataire.dashboard.unavailable') | t }}
+      </span>
+      <label class="row avail-switch">
+        <span class="switch">
+          <input type="checkbox" [checked]="available()" [disabled]="savingAvailability()" (change)="toggleAvailability($event)" />
+          <span></span>
+        </span>
+        <span class="small">{{ 'prestataire.dashboard.takesBookings' | t }}</span>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (data(); as d) {
+    @if (d.demandes_en_attente > 0) {
+      <div class="alert alert-warning row-between">
+        <span>
+          <i class="bi bi-bell-fill"></i>
+          <span
+            [innerHTML]="(d.demandes_en_attente > 1 ? 'prestataire.dashboard.pending.other' : 'prestataire.dashboard.pending.one') | t: { count: d.demandes_en_attente }"
+          ></span>
+        </span>
+        <a routerLink="/prestataire/rendez-vous" class="btn btn-sm btn-outline">{{ 'prestataire.dashboard.seeRequests' | t }} <i class="bi bi-arrow-right"></i></a>
+      </div>
+    }
+
+    <div class="grid-4">
+      <div class="stat-card">
+        <span class="chip">{{ 'prestataire.dashboard.today' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-cash-coin"></i></span>
+        <div class="stat-label">{{ 'prestataire.dashboard.revenueToday' | t }}</div>
+        <div class="stat-value">{{ d.revenus_jour | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</div>
+        @if (jourTrend(); as t) {
+          <div class="stat-sub"><span dir="ltr" [class.text-success]="t.up === true" [class.text-danger]="t.up === false">{{ t.text }}</span> {{ 'prestataire.dashboard.vsYesterday' | t }}</div>
+        }
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'prestataire.dashboard.week' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span>
+        <div class="stat-label">{{ 'prestataire.dashboard.revenueWeek' | t }}</div>
+        <div class="stat-value">{{ d.revenus_semaine | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</div>
+        @if (semaineTrend(); as t) {
+          <div class="stat-sub"><span dir="ltr" [class.text-success]="t.up === true" [class.text-danger]="t.up === false">{{ t.text }}</span> {{ 'prestataire.dashboard.vsLastWeek' | t }}</div>
+        }
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'prestataire.dashboard.activity' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-check2-circle"></i></span>
+        <div class="stat-label">{{ 'prestataire.dashboard.jobsDone' | t }}</div>
+        <div class="stat-value">{{ (d.jobs_termines_semaine > 1 ? 'prestataire.dashboard.jobs.other' : 'prestataire.dashboard.jobs.one') | t: { count: d.jobs_termines_semaine } }}</div>
+        <div class="stat-sub">{{ 'prestataire.dashboard.thisWeek' | t }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'prestataire.dashboard.reviews' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-star-fill"></i></span>
+        <div class="stat-label">{{ 'prestataire.dashboard.clientRating' | t }}</div>
+        <div class="stat-value" dir="ltr">{{ d.note_moyenne | appNumber: '1.1-1' }}/{{ 5 | appNumber: '1.1-1' }}</div>
+        <div class="stat-sub">{{ (d.nb_avis === 1 ? 'prestataire.evaluations.count.one' : 'prestataire.evaluations.count.other') | t: { count: d.nb_avis } }}</div>
+      </div>
+    </div>
+
+    <div class="grid-2 bottom">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="chip">{{ 'prestataire.dashboard.planning' | t }}</span>
+            <h3 class="mt">{{ 'prestataire.dashboard.todayInterventions' | t }}</h3>
+          </div>
+          <a routerLink="/prestataire/rendez-vous" class="btn btn-sm btn-ghost">{{ 'common.actions.seeAll' | t }} <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="stack">
+          @for (rdv of d.interventions_du_jour; track rdv.id) {
+            <div class="planning-item">
+              <div class="time">{{ rdv.heure ?? ('prestataire.shared.noTime' | t) }}</div>
+              <div class="grow">
+                <div class="row-between">
+                  <strong>{{ rdv.client.nom }}</strong>
+                  <app-status-badge [status]="rdv.status" />
+                </div>
+                <div class="small muted">{{ rdv.categorie.nom }}</div>
+                @if (rdv.address) {
+                  <div class="small muted"><i class="bi bi-geo-alt"></i> {{ rdv.address }}</div>
+                }
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">
+              <i class="bi bi-calendar2-check"></i>
+              {{ 'prestataire.dashboard.noneToday' | t }}
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="chip">{{ 'prestataire.dashboard.nextStep' | t }}</span>
+            <h3 class="mt">{{ 'prestataire.dashboard.upcoming' | t }}</h3>
+          </div>
+        </div>
+        @if (next(); as rdv) {
+          <div class="stack">
+            <div class="info-line"><i class="bi bi-calendar-event"></i> <span>{{ rdv.date | appDate: 'full' }}</span></div>
+            <div class="info-line"><i class="bi bi-clock"></i> <span>{{ rdv.heure ?? ('prestataire.shared.timeToConfirm' | t) }}</span></div>
+            <div class="info-line"><i class="bi bi-person"></i> <span>{{ rdv.client.nom }} · {{ rdv.categorie.nom }}</span></div>
+            <div class="info-line"><i class="bi bi-geo-alt"></i> <span>{{ rdv.address ?? ('prestataire.shared.noAddress' | t) }}</span></div>
+            @if (mapEmbed(); as src) {
+              <iframe class="map" [src]="src" [title]="'prestataire.dashboard.mapTitle' | t" loading="lazy"></iframe>
+            }
+            <a class="btn btn-outline btn-sm maps-btn" [href]="maps(rdv)" target="_blank" rel="noopener">
+              <i class="bi bi-map"></i> {{ 'prestataire.shared.openMaps' | t }}
+            </a>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            {{ 'prestataire.dashboard.noneUpcoming' | t }}
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

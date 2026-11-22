@@ -1,0 +1,121 @@
+<div class="wrap">
+  <form class="card form-card" (ngSubmit)="submit()" novalidate>
+    <div class="head">
+      <span class="head-icon"><i class="bi bi-calendar-plus"></i></span>
+      <div>
+        <h2>{{ 'client.nouveauRdv.title' | t }}</h2>
+        <p class="muted">{{ 'client.nouveauRdv.subtitle' | t }}</p>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-danger"><i class="bi bi-exclamation-circle"></i> {{ error() }}</div>
+    }
+
+    <div class="form-group">
+      <label class="form-label" for="categorie">{{ 'client.nouveauRdv.categorie' | t }}</label>
+      <select id="categorie" class="form-control" [class.invalid]="errors()['categorie_service_id']" name="categorie" [ngModel]="categorieId()" (ngModelChange)="onCategorie($event)">
+        <option [ngValue]="null">{{ 'client.nouveauRdv.selectCategorie' | t }}</option>
+        @for (c of categories(); track c.id) {
+          <option [ngValue]="c.id">{{ c.nom }}</option>
+        }
+      </select>
+      @if (errors()['categorie_service_id']) { <span class="form-error">{{ errors()['categorie_service_id'] }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="prestataire">{{ 'client.nouveauRdv.prestataire' | t }}</label>
+      <select
+        id="prestataire"
+        class="form-control"
+        [class.invalid]="errors()['prestataire_id']"
+        name="prestataire"
+        [disabled]="!categorieId() || loadingPrestataires()"
+        [ngModel]="prestataireId()"
+        (ngModelChange)="prestataireId.set($event)"
+      >
+        @if (!categorieId()) {
+          <option [ngValue]="null">{{ 'client.nouveauRdv.chooseCategorieFirst' | t }}</option>
+        } @else if (loadingPrestataires()) {
+          <option [ngValue]="null">{{ 'client.nouveauRdv.loadingPrestataires' | t }}</option>
+        } @else if (prestataires().length === 0) {
+          <option [ngValue]="null">{{ 'client.nouveauRdv.noPrestataire' | t }}</option>
+        } @else {
+          <option [ngValue]="null">{{ 'client.nouveauRdv.selectPrestataire' | t }}</option>
+          @for (p of prestataires(); track p.id) {
+            <option [ngValue]="p.id">{{ optionLabel(p) }}</option>
+          }
+        }
+      </select>
+      @if (errors()['prestataire_id']) { <span class="form-error">{{ errors()['prestataire_id'] }}</span> }
+      @if (categorieId() && !loadingPrestataires() && prestataires().length) {
+        <span class="form-hint">{{ 'client.nouveauRdv.sortedHint' | t }}</span>
+      }
+    </div>
+
+    @if (selected(); as p) {
+      <div class="summary">
+        <app-avatar [nom]="p.nom" [photoUrl]="p.photo_url" />
+        <div class="summary-info">
+          <strong>{{ p.nom }}</strong>
+          <span class="muted small">{{ p.prestataire?.specialite || p.prestataire?.categorie?.nom }}</span>
+          <div class="row small">
+            <app-star-rating [value]="p.prestataire?.note_moyenne ?? 0" [showValue]="true" />
+            <span class="muted">({{ 'common.units.reviews' | t: { count: p.prestataire?.nb_avis ?? 0 } }})</span>
+            @if (p.prestataire?.tarif_horaire != null) {
+              <span class="muted">· {{ p.prestataire?.tarif_horaire | appNumber: '1.0-2' }} {{ 'common.units.perHour' | t }}</span>
+            }
+            @if (p.distance_km != null) {
+              <span class="muted">· {{ p.distance_km | appNumber: '1.0-1' }} {{ 'common.units.km' | t }}</span>
+            }
+          </div>
+        </div>
+        <a class="btn btn-ghost btn-sm" [routerLink]="['/client/prestataires', p.id]">{{ 'client.nouveauRdv.profile' | t }}</a>
+      </div>
+    }
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label" for="date">{{ 'client.nouveauRdv.date' | t }}</label>
+        <input id="date" type="date" class="form-control" [class.invalid]="errors()['date']" name="date" [min]="today" [(ngModel)]="form.date" />
+        @if (errors()['date']) { <span class="form-error">{{ errors()['date'] }}</span> }
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="heure">{{ 'client.nouveauRdv.heure' | t }}</label>
+        <input id="heure" type="time" class="form-control" [class.invalid]="errors()['heure']" name="heure" [(ngModel)]="form.heure" />
+        @if (errors()['heure']) {
+          <span class="form-error">{{ errors()['heure'] }}</span>
+        } @else {
+          <span class="form-hint">{{ 'client.nouveauRdv.heureHint' | t }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="address">{{ 'client.nouveauRdv.address' | t }}</label>
+      <div class="address">
+        <input id="address" class="form-control" [class.invalid]="errors()['address']" name="address" [(ngModel)]="form.address" [placeholder]="'client.nouveauRdv.addressPlaceholder' | t" autocomplete="street-address" />
+        <button type="button" class="btn btn-outline" (click)="locate()" [disabled]="locating()">
+          <i class="bi bi-crosshair"></i> {{ (locating() ? 'client.shared.locating' : 'client.shared.useMyPosition') | t }}
+        </button>
+      </div>
+      @if (errors()['address']) { <span class="form-error">{{ errors()['address'] }}</span> }
+      @if (coords(); as c) {
+        <span class="form-hint"><i class="bi bi-geo-alt-fill"></i> {{ 'client.nouveauRdv.coords' | t: { lat: (c.lat | appNumber: '1.5-5'), lng: (c.lng | appNumber: '1.5-5') } }}</span>
+      }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="description">{{ 'client.nouveauRdv.description' | t }}</label>
+      <textarea id="description" class="form-control" [class.invalid]="errors()['description']" name="description" rows="4" [(ngModel)]="form.description" [placeholder]="'client.nouveauRdv.descriptionPlaceholder' | t"></textarea>
+      @if (errors()['description']) { <span class="form-error">{{ errors()['description'] }}</span> }
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-ghost" routerLink="/client/rendez-vous">{{ 'common.actions.cancel' | t }}</a>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        <i class="bi bi-send"></i> {{ (saving() ? 'common.actions.sending' : 'client.nouveauRdv.submit') | t }}
+      </button>
+    </div>
+  </form>
+</div>

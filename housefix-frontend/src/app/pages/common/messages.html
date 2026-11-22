@@ -1,0 +1,194 @@
+<div class="messenger card" [class.chat-open]="activeId() !== null">
+  <!-- Liste des conversations -->
+  <aside class="list-pane">
+    <div class="list-head">
+      <h3>{{ 'pages.messages.title' | t }}</h3>
+      <div class="search">
+        <i class="bi bi-search"></i>
+        <input class="form-control" [placeholder]="'pages.messages.search' | t" [attr.aria-label]="'pages.messages.search' | t" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </div>
+    </div>
+
+    <div class="list-body">
+      @if (loadingList()) {
+        <div class="spinner"></div>
+      } @else if (filtered().length === 0) {
+        <div class="empty-state">
+          <i class="bi bi-chat-dots"></i>
+          {{ (search() ? 'pages.messages.noResult' : 'pages.messages.noConversation') | t }}
+        </div>
+      } @else {
+        @for (c of filtered(); track c.id) {
+          <button type="button" class="conv" [class.active]="c.id === activeId()" (click)="select(c)">
+            <app-avatar [nom]="c.other_user.nom" [photoUrl]="c.other_user.photo_url" />
+            <div class="conv-main">
+              <div class="conv-top">
+                <strong>{{ c.other_user.nom }}</strong>
+                @if (c.last_message) {
+                  <span class="time">
+                    {{ c.last_message.created_at | appDate: (isToday(c.last_message.created_at) ? 'time' : 'daymonth') }}
+                  </span>
+                }
+              </div>
+              <div class="conv-bottom">
+                <span class="preview" [class.unread]="c.unread_count > 0">
+                  @if (c.last_message; as last) {
+                    @if (last.sender_id === meId()) { {{ 'pages.messages.youPrefix' | t }} }
+                    @if (previewKey(last); as key) {
+                      <i class="bi" [class.bi-image]="last.type === 'image'" [class.bi-file-earmark-pdf]="last.type === 'file'"></i> {{ key | t }}
+                    } @else {
+                      @if (last.type !== 'text') { <i class="bi bi-paperclip"></i> }{{ last.content }}
+                    }
+                  } @else {
+                    <em>{{ 'pages.messages.newConversation' | t }}</em>
+                  }
+                </span>
+                @if (c.unread_count > 0) {
+                  <span class="count" [attr.aria-label]="(c.unread_count === 1 ? 'pages.messages.unreadOne' : 'pages.messages.unreadOther') | t: { count: c.unread_count }">{{ c.unread_count }}</span>
+                }
+              </div>
+            </div>
+          </button>
+        }
+      }
+    </div>
+  </aside>
+
+  <!-- Fil de discussion -->
+  <section
+    class="chat-pane"
+    (dragenter)="onDragEnter($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    @if (active(); as conv) {
+      <header class="chat-head">
+        <button type="button" class="btn btn-ghost btn-icon back" (click)="back()" [attr.aria-label]="'pages.messages.backToList' | t">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <app-avatar [nom]="conv.other_user.nom" [photoUrl]="conv.other_user.photo_url" />
+        <div class="chat-title">
+          <strong>{{ conv.other_user.nom }}</strong>
+          @if (otherTyping()) {
+            <span class="typing" aria-live="polite">
+              <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> {{ 'pages.messages.typing' | t }}
+            </span>
+          } @else {
+            <span class="muted small">{{ (conv.other_user.role === 'prestataire' ? 'common.roles.prestataire' : 'common.roles.client') | t }}</span>
+          }
+        </div>
+        @if (profileLink(conv); as link) {
+          <a class="btn btn-ghost btn-sm" [routerLink]="link"><i class="bi bi-person-vcard"></i> <span class="hide-sm">{{ 'pages.messages.viewProfile' | t }}</span></a>
+        }
+      </header>
+
+      <div class="chat-body" #scroller (scroll)="onScroll()" role="log" aria-live="polite" [attr.aria-busy]="loadingMessages()">
+        @if (loadingMessages()) {
+          <div class="spinner"></div>
+        } @else if (messages().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-chat-heart"></i>
+            {{ 'pages.messages.noMessage' | t }}
+          </div>
+        } @else {
+          @if (hasOlder()) {
+            <div class="older">
+              <button type="button" class="btn btn-ghost btn-sm" (click)="loadOlder()" [disabled]="loadingOlder()">
+                @if (loadingOlder()) { <span class="spinner sm"></span> } @else { <i class="bi bi-arrow-up"></i> }
+                {{ 'pages.messages.loadOlder' | t }}
+              </button>
+            </div>
+          }
+          @for (m of messages(); track m.id; let i = $index) {
+            @if (newDay(i)) {
+              <div class="day"><span>{{ m.created_at | appDate: 'full' }}</span></div>
+            }
+            <div class="bubble-row" [class.mine]="m.sender_id === meId()" [class.grouped]="continues(i)">
+              <div class="bubble" [class.has-media]="m.attachment">
+                @if (m.attachment; as att) {
+                  <app-message-attachment [attachment]="att" [localUrl]="localPreviews.get(m.id) ?? null" />
+                }
+                @if (m.content) {
+                  <p>{{ m.content }}</p>
+                }
+                @if (!groupContinuesAfter(i)) {
+                  <span class="meta">
+                    {{ m.created_at | appDate: 'time' }}
+                    @if (m.sender_id === meId()) {
+                      <i class="bi" [class.bi-check2-all]="m.is_read" [class.read]="m.is_read" [class.bi-check2]="!m.is_read"></i>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      @if (newBelow() > 0) {
+        <button type="button" class="new-below" (click)="jumpToLatest()">
+          <i class="bi bi-arrow-down"></i> {{ 'pages.messages.newMessages' | t }} ({{ newBelow() }})
+        </button>
+      }
+
+      <form class="composer-wrap" (ngSubmit)="send()">
+        @if (pending(); as p) {
+          <div class="pending">
+            @if (p.preview) {
+              <img [src]="p.preview" [alt]="p.file.name" />
+            } @else {
+              <span class="pending-icon"><i class="bi bi-file-earmark-pdf-fill"></i></span>
+            }
+            <span class="pending-name">{{ p.file.name }}</span>
+            <button type="button" class="btn btn-ghost btn-icon btn-sm" (click)="removePending()" [attr.aria-label]="'pages.messages.removeAttachment' | t">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        }
+        @if (fileError()) {
+          <div class="file-error" role="alert"><i class="bi bi-exclamation-circle"></i> {{ fileError() }}</div>
+        }
+        <div class="composer">
+          <button type="button" class="btn btn-ghost btn-icon" (click)="chooseFile()" [attr.aria-label]="'pages.messages.attach' | t" [title]="('pages.messages.attach' | t) + ' — ' + ('pages.messages.attachmentHint' | t)">
+            <i class="bi bi-paperclip"></i>
+          </button>
+          <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="onFilePicked($event)" hidden />
+          <textarea
+            #composer
+            class="form-control"
+            name="draft"
+            rows="1"
+            [maxlength]="maxLength"
+            [placeholder]="'pages.messages.placeholder' | t"
+            [attr.aria-label]="'pages.messages.placeholder' | t"
+            [(ngModel)]="draft"
+            (input)="onInput()"
+            (keydown)="onKeydown($event)"
+            (paste)="onPaste($event)"
+          ></textarea>
+          <button type="submit" class="btn btn-primary btn-icon" [disabled]="sending() || (!draft.trim() && !pending())" [attr.aria-label]="'common.actions.send' | t">
+            @if (sending()) { <span class="spinner sm light"></span> } @else { <i class="bi bi-send-fill"></i> }
+          </button>
+        </div>
+        @if (draft.length > maxLength - 200) {
+          <span class="chars" [class.warn]="draft.length >= maxLength">{{ 'pages.messages.charsLeft' | t: { count: maxLength - draft.length } }}</span>
+        }
+      </form>
+
+      @if (dragging()) {
+        <div class="drop-overlay" aria-hidden="true">
+          <i class="bi bi-cloud-arrow-up"></i>
+          <strong>{{ 'pages.messages.dropHere' | t }}</strong>
+          <span>{{ 'pages.messages.attachmentHint' | t }}</span>
+        </div>
+      }
+    } @else {
+      <div class="empty-state chat-empty">
+        <i class="bi bi-chat-square-text"></i>
+        <strong>{{ 'pages.messages.selectTitle' | t }}</strong>
+        <p class="small">{{ 'pages.messages.selectHint' | t }}</p>
+      </div>
+    }
+  </section>
+</div>

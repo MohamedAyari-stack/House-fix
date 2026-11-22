@@ -1,0 +1,120 @@
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.identity {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.specialite {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dot {
+  font-size: 6px;
+}
+
+.description {
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+.infos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.info div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.info-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.reviews {
+  display: flex;
+  flex-direction: column;
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.review:first-child {
+  padding-top: 0;
+}
+.review:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+}
+
+.comment {
+  line-height: 1.5;
+}
+
+.reply {
+  margin-inline-start: 28px;
+  padding: 10px 14px;
+  border-radius: 4px 14px 14px 14px;
+  background: var(--primary-soft);
+  border-inline-start: 3px solid var(--primary);
+}
+.reply strong {
+  font-size: 12px;
+  color: var(--primary);
+}
+.reply p {
+  margin-top: 4px;
+}
+
+@media (max-width: 700px) {
+  .actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .actions .btn {
+    flex: 1;
+  }
+  .reply {
+    margin-inline-start: 12px;
+  }
+}

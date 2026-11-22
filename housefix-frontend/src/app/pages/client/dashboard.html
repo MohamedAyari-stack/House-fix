@@ -1,0 +1,200 @@
+<div class="page">
+  <section class="hero">
+    <div>
+      <h1>{{ 'client.dashboard.hello' | t: { name: firstName() } }}</h1>
+      <p>{{ 'client.dashboard.subtitle' | t }}</p>
+      <span class="verified"><span class="dot">●</span> {{ 'client.dashboard.verified' | t }}</span>
+    </div>
+    <a class="btn btn-primary" routerLink="/client/rendez-vous/nouveau"><i class="bi bi-calendar-plus"></i> {{ 'client.shared.newRdv' | t }}</a>
+  </section>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (stats(); as s) {
+    <div class="grid-3">
+      <div class="stat-card">
+        <span class="chip">{{ 'client.dashboard.stats.historyChip' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-tools"></i></span>
+        <div class="stat-label">{{ 'client.dashboard.stats.interventions' | t }}</div>
+        <div class="stat-value">{{ s.interventions_terminees }}</div>
+        <div class="stat-sub">{{ 'client.dashboard.stats.interventionsSub' | t }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'client.dashboard.stats.servicesChip' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-grid"></i></span>
+        <div class="stat-label">{{ 'client.dashboard.stats.categories' | t }}</div>
+        <div class="stat-value">{{ s.categories_actives }}</div>
+        <div class="stat-sub">{{ 'client.dashboard.stats.categoriesSub' | t }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'client.dashboard.stats.programChip' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-trophy"></i></span>
+        <div class="stat-label">{{ 'client.dashboard.stats.progression' | t }}</div>
+        <div class="stat-value">{{ s.progression }}%</div>
+        <div class="progress"><span [style.width.%]="s.progression"></span></div>
+        <div class="stat-sub">{{ 'client.dashboard.stats.progressionSub' | t }}</div>
+      </div>
+    </div>
+
+    @if (s.rdv_en_cours > 0 || s.factures_impayees > 0) {
+      <div class="alerts">
+        @if (s.rdv_en_cours > 0) {
+          <a class="alert" routerLink="/client/rendez-vous">
+            <i class="bi bi-clock-history"></i>
+            {{ (s.rdv_en_cours > 1 ? 'client.dashboard.alerts.rdvOther' : 'client.dashboard.alerts.rdvOne') | t: { count: s.rdv_en_cours } }}
+            <span class="go">{{ 'client.dashboard.alerts.follow' | t }} <i class="bi bi-arrow-right"></i></span>
+          </a>
+        }
+        @if (s.factures_impayees > 0) {
+          <a class="alert alert-warning" routerLink="/client/factures">
+            <i class="bi bi-receipt"></i>
+            {{ (s.factures_impayees > 1 ? 'client.dashboard.alerts.invoicesOther' : 'client.dashboard.alerts.invoicesOne') | t: { count: s.factures_impayees } }}
+            <span class="go">{{ 'client.dashboard.alerts.pay' | t }} <i class="bi bi-arrow-right"></i></span>
+          </a>
+        }
+      </div>
+    }
+  }
+
+  <div class="layout">
+    <section class="stack">
+      <div>
+        <span class="chip">{{ 'client.dashboard.quick.chip' | t }}</span>
+        <h3 class="section-title">{{ 'client.dashboard.quick.title' | t }}</h3>
+      </div>
+      <div class="grid-3">
+        @for (q of quickLinks; track q.link) {
+          <a class="card quick" [routerLink]="q.link">
+            <span class="quick-icon" [class]="'quick-icon tone-' + q.tone"><i class="bi" [class]="'bi ' + q.icon"></i></span>
+            <strong>{{ q.title | t }}</strong>
+            <span class="muted small">{{ q.text | t }}</span>
+          </a>
+        }
+      </div>
+    </section>
+
+    <section class="card next">
+      <div class="card-header">
+        <h3><i class="bi bi-calendar-event"></i> {{ 'client.dashboard.next.title' | t }}</h3>
+      </div>
+      @if (stats()?.prochain_rdv; as r) {
+        <div class="stack">
+          <div class="row-between">
+            <strong>{{ r.categorie.nom }}</strong>
+            <app-status-badge [status]="r.status" />
+          </div>
+          <div class="info-line"><i class="bi bi-calendar3"></i> {{ r.date | appDate: 'full' }}</div>
+          <div class="info-line"><i class="bi bi-clock"></i> {{ r.heure ?? ('client.dashboard.next.timeTbc' | t) }}</div>
+          <div class="info-line"><i class="bi bi-person"></i> {{ r.prestataire.nom }}</div>
+          @if (r.address) { <div class="info-line"><i class="bi bi-geo-alt"></i> {{ r.address }}</div> }
+          <a class="btn btn-outline btn-sm" routerLink="/client/rendez-vous">{{ 'client.dashboard.next.seeAll' | t }}</a>
+        </div>
+      } @else if (!loading()) {
+        <div class="empty-state small-empty">
+          <i class="bi bi-calendar-x"></i>
+          {{ 'client.dashboard.next.empty' | t }}
+          <div><a class="btn btn-primary btn-sm" routerLink="/client/rendez-vous/nouveau">{{ 'common.actions.book' | t }}</a></div>
+        </div>
+      }
+    </section>
+  </div>
+
+  <section class="stack">
+    <div class="row-between">
+      <div>
+        <span class="chip">{{ 'client.dashboard.reco.chip' | t }}</span>
+        <h3 class="section-title">{{ 'client.dashboard.reco.title' | t }}</h3>
+      </div>
+      <span class="muted small">
+        @if (reco()[0]?.source === 'ia') {
+          <span class="badge badge-violet"><i class="bi bi-cpu"></i> {{ 'client.dashboard.reco.ai' | t }}</span>
+        }
+        <i class="bi" [class.bi-crosshair]="positionBasis() === 'gps'" [class.bi-house]="positionBasis() === 'address'" [class.bi-geo]="positionBasis() === 'gouvernorat'"></i>
+        @switch (positionBasis()) {
+          @case ('gps') { {{ 'client.dashboard.reco.byPosition' | t }} }
+          @case ('address') { {{ 'client.dashboard.reco.byAddress' | t }} }
+          @default { {{ 'client.dashboard.reco.byGouvernorat' | t }} }
+        }
+      </span>
+    </div>
+
+    <form class="besoin" (ngSubmit)="rechercherBesoin()">
+      <label class="form-label" for="besoin">{{ 'client.dashboard.reco.besoinLabel' | t }}</label>
+      <div class="besoin-row">
+        <div class="besoin-input">
+          <i class="bi bi-stars"></i>
+          <input
+            id="besoin"
+            class="form-control"
+            name="besoin"
+            [(ngModel)]="besoin"
+            maxlength="300"
+            [placeholder]="'client.dashboard.reco.besoinPlaceholder' | t"
+          />
+        </div>
+        <button class="btn btn-primary" type="submit" [disabled]="recoLoading()">{{ 'client.dashboard.reco.recommend' | t }}</button>
+        @if (besoinActif()) {
+          <button class="btn btn-ghost" type="button" (click)="effacerBesoin()">{{ 'client.dashboard.reco.clear' | t }}</button>
+        }
+      </div>
+    </form>
+
+    @if (recoLoading()) {
+      <div class="spinner"></div>
+    } @else if (reco().length === 0) {
+      <div class="card empty-state">
+        <i class="bi bi-award"></i>
+        <strong>{{ 'client.dashboard.reco.empty' | t }}</strong>
+        <p class="small muted">{{ 'common.reco.criteria' | t }}</p>
+        <a class="btn btn-outline btn-sm" routerLink="/client/prestataires"><i class="bi bi-search"></i> {{ 'client.dashboard.reco.seeAll' | t }}</a>
+      </div>
+    } @else {
+      <div class="grid-cards">
+        @for (p of reco(); track p.id) {
+          <div class="card reco">
+            <div class="row reco-head">
+              <app-avatar [nom]="p.nom" [photoUrl]="p.photo_url" />
+              <div class="reco-name">
+                <strong>{{ p.nom }}</strong>
+                @if (p.is_recommended) { <app-reco-badge /> }
+                <span class="muted small">{{ p.prestataire?.categorie?.nom ?? '—' }}</span>
+              </div>
+              @if (p.source === 'ia') {
+                <span class="match" [title]="'client.dashboard.reco.scoreTitle' | t">{{ p.score * 100 | appNumber: '1.0-0' }} %</span>
+              }
+            </div>
+            @if (p.raisons?.length) {
+              <ul class="raisons">
+                @for (r of p.raisons; track r) {
+                  <li><i class="bi bi-check2-circle"></i> {{ r }}</li>
+                }
+              </ul>
+            }
+            <div class="row small">
+              <app-star-rating [value]="p.prestataire?.note_moyenne ?? 0" [showValue]="true" />
+              <span class="muted">({{ 'common.units.reviews' | t: { count: p.prestataire?.nb_avis ?? 0 } }})</span>
+            </div>
+            <div class="row small muted">
+              @if (p.prestataire?.tarif_horaire != null) {
+                <span><i class="bi bi-cash"></i> {{ p.prestataire?.tarif_horaire | appNumber: '1.0-2' }} {{ 'common.units.perHour' | t }}</span>
+              }
+              @if (p.distance_km != null) {
+                <span><i class="bi bi-geo-alt"></i> {{ p.distance_km | appNumber: '1.0-1' }} {{ 'common.units.km' | t }}</span>
+              } @else if (p.gouvernorat) {
+                <span><i class="bi bi-geo-alt"></i> {{ p.gouvernorat | gouv }}</span>
+              }
+            </div>
+            <div class="card-footer">
+              <a class="btn btn-outline btn-sm" [routerLink]="['/client/prestataires', p.id]">{{ 'common.actions.seeProfile' | t }}</a>
+              <a
+                class="btn btn-primary btn-sm"
+                routerLink="/client/rendez-vous/nouveau"
+                [queryParams]="{ prestataire: p.id, categorie: p.prestataire?.categorie_service_id }"
+              >{{ 'common.actions.book' | t }}</a>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>

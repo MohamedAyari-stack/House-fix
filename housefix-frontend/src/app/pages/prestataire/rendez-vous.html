@@ -1,0 +1,173 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>{{ 'prestataire.rdv.title' | t }}</h2>
+      <p>{{ 'prestataire.rdv.subtitle' | t }}</p>
+    </div>
+    <button type="button" class="btn btn-outline" (click)="load()" [disabled]="loading()">
+      <i class="bi bi-arrow-clockwise"></i> {{ 'prestataire.rdv.refresh' | t }}
+    </button>
+  </div>
+
+  <div class="tabs">
+    @for (t of tabs; track t) {
+      <button type="button" [class.active]="tab() === t" (click)="tab.set(t)">
+        {{ tabLabel(t) }}
+        @if (counts()[t]) {
+          <span class="count" [class.hot]="t === 'en_attente'">{{ counts()[t] }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else {
+    <div class="grid-cards">
+      @for (r of filtered(); track r.id) {
+        <div class="card rdv-card">
+          <div class="card-header">
+            <strong>{{ 'prestataire.rdv.number' | t: { id: r.id } }}</strong>
+            <app-status-badge [status]="r.status" />
+          </div>
+          <div class="stack body">
+            <div class="info-line"><i class="bi bi-person"></i><span><span class="lbl">{{ 'prestataire.rdv.client' | t }}</span>{{ r.client.nom }}</span></div>
+            <div class="info-line"><i class="bi bi-calendar-event"></i><span><span class="lbl">{{ 'prestataire.rdv.date' | t }}</span>{{ r.date | appDate: 'full' }}</span></div>
+            <div class="info-line">
+              <i class="bi bi-clock"></i>
+              <span class="grow"><span class="lbl">{{ 'prestataire.rdv.time' | t }}</span>{{ r.heure ?? ('prestataire.rdv.toConfirm' | t) }}</span>
+              @if (r.status === 'accepte') {
+                <button type="button" class="btn btn-ghost btn-sm mini" (click)="open('horaire', r)"><i class="bi bi-pencil"></i> {{ 'common.actions.edit' | t }}</button>
+              }
+            </div>
+            <div class="info-line"><i class="bi bi-tools"></i><span><span class="lbl">{{ 'prestataire.rdv.category' | t }}</span>{{ r.categorie.nom }}</span></div>
+            <div class="info-line">
+              <i class="bi bi-geo-alt"></i>
+              <span>
+                <span class="lbl">{{ 'prestataire.rdv.address' | t }}</span>{{ r.address ?? ('prestataire.rdv.notProvided' | t) }}
+                @if (r.latitude != null && r.longitude != null) {
+                  <span class="small muted d-block" dir="ltr">{{ r.latitude }}, {{ r.longitude }}</span>
+                }
+              </span>
+            </div>
+            @if (r.description) {
+              <div class="info-line"><i class="bi bi-chat-left-text"></i><span><span class="lbl">{{ 'prestataire.rdv.description' | t }}</span>{{ r.description }}</span></div>
+            }
+            @if (r.status === 'refuse' && r.motif_refus) {
+              <div class="small muted">{{ 'prestataire.rdv.refusalReason' | t: { motif: r.motif_refus } }}</div>
+            }
+          </div>
+          <div class="card-footer">
+            @switch (r.status) {
+              @case ('en_attente') {
+                <button type="button" class="btn btn-success btn-sm" (click)="open('accepter', r)"><i class="bi bi-check-lg"></i> {{ 'prestataire.rdv.accept' | t }}</button>
+                <button type="button" class="btn btn-danger btn-sm" (click)="open('refuser', r)"><i class="bi bi-x-lg"></i> {{ 'prestataire.rdv.refuse' | t }}</button>
+              }
+              @case ('accepte') {
+                <button type="button" class="btn btn-primary btn-sm" [disabled]="busy()" (click)="terminer(r)"><i class="bi bi-check2-all"></i> {{ 'prestataire.rdv.finish' | t }}</button>
+                <button type="button" class="btn btn-outline btn-sm" (click)="open('horaire', r)"><i class="bi bi-clock-history"></i> {{ 'prestataire.rdv.editSchedule' | t }}</button>
+              }
+              @case ('termine') {
+                <button type="button" class="btn btn-violet btn-sm" (click)="open('facture', r)"><i class="bi bi-receipt"></i> {{ 'prestataire.rdv.generateInvoice' | t }}</button>
+              }
+              @case ('facture') {
+                @if (r.facture) {
+                  <a class="badge badge-success" [routerLink]="['/prestataire/factures', r.facture.id]"><i class="bi bi-receipt-cutoff"></i> {{ 'prestataire.rdv.invoiceGenerated' | t }}</a>
+                } @else {
+                  <span class="badge badge-success"><i class="bi bi-receipt-cutoff"></i> {{ 'prestataire.rdv.invoiceGenerated' | t }}</span>
+                }
+              }
+            }
+            <span class="spacer"></span>
+            <a class="btn btn-ghost btn-sm btn-icon" [href]="maps(r)" target="_blank" rel="noopener" [title]="'prestataire.shared.openMaps' | t" [attr.aria-label]="'prestataire.shared.openMaps' | t"><i class="bi bi-map"></i></a>
+            <a class="btn btn-ghost btn-sm btn-icon" routerLink="/prestataire/messages" [queryParams]="{ user: r.client_id }" [title]="'prestataire.rdv.sendMessage' | t" [attr.aria-label]="'prestataire.rdv.sendMessage' | t"><i class="bi bi-chat-dots"></i></a>
+          </div>
+        </div>
+      } @empty {
+        <div class="card empty-state full">
+          <i class="bi bi-calendar-x"></i>
+          {{ 'prestataire.rdv.empty' | t }}
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (modal(); as kind) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      @switch (kind) {
+        @case ('accepter') {
+          <h3>{{ 'prestataire.rdv.modal.acceptTitle' | t }}</h3>
+          <p class="muted small mb">{{ 'prestataire.rdv.modal.acceptHint' | t: { nom: current()?.client?.nom ?? '' } }}</p>
+          <div class="form-group">
+            <label class="form-label" for="acc-heure">{{ 'prestataire.rdv.time' | t }}</label>
+            <input id="acc-heure" type="time" class="form-control" [(ngModel)]="heure" />
+          </div>
+        }
+        @case ('refuser') {
+          <h3>{{ 'prestataire.rdv.modal.refuseTitle' | t }}</h3>
+          <div class="form-group">
+            <label class="form-label" for="ref-motif">{{ 'prestataire.rdv.modal.reasonOptional' | t }}</label>
+            <textarea id="ref-motif" class="form-control" [(ngModel)]="motif" [placeholder]="'prestataire.rdv.modal.reasonPlaceholder' | t"></textarea>
+          </div>
+        }
+        @case ('horaire') {
+          <h3>{{ 'prestataire.rdv.modal.scheduleTitle' | t }}</h3>
+          <div class="form-group">
+            <label class="form-label" for="h-heure">{{ 'prestataire.rdv.time' | t }}</label>
+            <input id="h-heure" type="time" class="form-control" [(ngModel)]="heure" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="h-date">{{ 'prestataire.rdv.modal.newDateOptional' | t }}</label>
+            <input id="h-date" type="date" class="form-control" [(ngModel)]="date" [min]="today" />
+            <span class="form-hint">{{ 'prestataire.rdv.modal.keepDate' | t: { date: (current()?.date | appDate: 'date') } }}</span>
+          </div>
+        }
+        @case ('facture') {
+          <h3>{{ 'prestataire.rdv.modal.invoiceTitle' | t }}</h3>
+          <div class="form-group">
+            <label class="form-label" for="f-montant">{{ 'prestataire.rdv.modal.amount' | t }}</label>
+            <input id="f-montant" type="number" min="0.01" step="0.01" class="form-control" [(ngModel)]="montant" placeholder="0.00" />
+            @if (tauxTva() !== null) {
+              <span class="form-hint">{{ 'prestataire.rdv.modal.vatRate' | t: { taux: (tauxTva() | appNumber: '1.0-2') } }}</span>
+            }
+          </div>
+          @if (apercuTva(); as a) {
+            <div class="tva-preview">
+              <div class="row-between"><span>{{ 'prestataire.rdv.modal.vatAmount' | t: { taux: (tauxTva() | appNumber: '1.0-2') } }}</span><span>{{ a.tva | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</span></div>
+              <div class="row-between"><strong>{{ 'prestataire.rdv.modal.totalTtc' | t }}</strong><strong>{{ a.ttc | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</strong></div>
+            </div>
+          }
+          <div class="form-group">
+            <label class="form-label" for="f-details">{{ 'prestataire.rdv.modal.details' | t }}</label>
+            <textarea id="f-details" class="form-control" [(ngModel)]="details" [placeholder]="'prestataire.rdv.modal.detailsPlaceholder' | t"></textarea>
+          </div>
+        }
+      }
+      @if (modalError()) {
+        <div class="alert alert-danger">{{ modalError() }}</div>
+      }
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" (click)="close()">{{ 'common.actions.cancel' | t }}</button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-success]="kind === 'accepter'"
+          [class.btn-danger]="kind === 'refuser'"
+          [class.btn-primary]="kind === 'horaire'"
+          [class.btn-violet]="kind === 'facture'"
+          [disabled]="busy()"
+          (click)="confirmModal()"
+        >
+          @switch (kind) {
+            @case ('accepter') { {{ 'prestataire.rdv.accept' | t }} }
+            @case ('refuser') { {{ 'prestataire.rdv.refuse' | t }} }
+            @case ('horaire') { {{ 'common.actions.save' | t }} }
+            @case ('facture') { {{ 'prestataire.rdv.modal.generate' | t }} }
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

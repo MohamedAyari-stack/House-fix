@@ -1,0 +1,34 @@
+.party {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.party app-avatar ::ng-deep .avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.facture-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-only {
+    display: none;
+  }
+  .mobile-only {
+    display: flex;
+  }
+}

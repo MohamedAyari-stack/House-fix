@@ -1,0 +1,287 @@
+<!-- En-tête -->
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" routerLink="/" [attr.aria-label]="'accueil.homeAria' | t">
+      <span class="brand-icon"><i class="bi bi-house-gear-fill"></i></span>
+      <span>DarFix</span>
+    </a>
+
+    <nav class="nav-links" [class.open]="menuOpen()" (click)="menuOpen.set(false)">
+      <a href="#services">{{ 'accueil.nav.services' | t }}</a>
+      <a href="#fonctionnement">{{ 'accueil.nav.howItWorks' | t }}</a>
+      <a href="#prestataires">{{ 'accueil.nav.providers' | t }}</a>
+      <a href="#avis">{{ 'accueil.nav.reviews' | t }}</a>
+      <a class="mobile-only" routerLink="/login">{{ 'accueil.nav.login' | t }}</a>
+    </nav>
+
+    <div class="nav-actions">
+      <app-lang-switch />
+      <app-theme-toggle />
+      <a class="btn btn-ghost desktop-only" routerLink="/login">{{ 'accueil.nav.login' | t }}</a>
+      <a class="btn btn-primary" routerLink="/register">{{ 'accueil.nav.register' | t }}</a>
+      <button
+        type="button"
+        class="btn btn-outline btn-icon burger"
+        (click)="menuOpen.set(!menuOpen())"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-label]="'accueil.nav.openMenu' | t"
+      >
+        <i class="bi" [class.bi-list]="!menuOpen()" [class.bi-x-lg]="menuOpen()"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Accroche -->
+  <section class="landing-hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow"><i class="bi bi-geo-alt-fill"></i> {{ 'accueil.hero.eyebrow' | t }}</span>
+        <h1>{{ 'accueil.hero.titleStart' | t }} <span class="accent">{{ 'accueil.hero.titleAccent' | t }}</span></h1>
+        <p class="lead">{{ 'accueil.hero.lead' | t }}</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" [routerLink]="['/register']" [queryParams]="{ role: 'client' }">
+            {{ 'accueil.hero.findProvider' | t }} <i class="bi bi-arrow-right"></i>
+          </a>
+          <a class="btn btn-outline btn-lg" [routerLink]="['/register']" [queryParams]="{ role: 'prestataire' }">
+            {{ 'accueil.hero.becomeProvider' | t }}
+          </a>
+        </div>
+        <ul class="hero-points">
+          <li><i class="bi bi-check-circle-fill"></i> {{ 'accueil.hero.points.free' | t }}</li>
+          <li><i class="bi bi-check-circle-fill"></i> {{ 'accueil.hero.points.validated' | t }}</li>
+          <li><i class="bi bi-check-circle-fill"></i> {{ 'accueil.hero.points.payment' | t }}</li>
+        </ul>
+      </div>
+
+      <!-- Aperçu de l'app, construit avec les vraies données -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="mock card">
+          <div class="mock-head">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="mock-title">{{ 'accueil.hero.mockTitle' | t }}</span>
+          </div>
+          @if (loading()) {
+            @for (p of placeholders.slice(0, 3); track p) {
+              <div class="mock-row"><span class="sk sk-avatar"></span><span class="sk sk-line"></span></div>
+            }
+          } @else {
+            @for (p of data()?.top_prestataires?.slice(0, 3) ?? []; track p.id) {
+              <div class="mock-row">
+                <app-avatar [nom]="p.nom" [photoUrl]="p.photo_url" />
+                <div class="mock-info">
+                  <strong>{{ p.nom }}</strong>
+                  <small>{{ p.categorie }} · {{ p.gouvernorat | gouv }}</small>
+                </div>
+                @if (p.nb_avis > 0) {
+                  <span class="mock-note"><i class="bi bi-star-fill"></i> {{ p.note_moyenne | appNumber: '1.1-1' }}</span>
+                } @else {
+                  <span class="badge badge-info">{{ 'accueil.hero.new' | t }}</span>
+                }
+              </div>
+            }
+          }
+        </div>
+        <div class="float-chip chip-ok"><i class="bi bi-calendar-check-fill"></i> {{ 'accueil.hero.chipConfirmed' | t }}</div>
+        <div class="float-chip chip-pay"><i class="bi bi-credit-card-2-front-fill"></i> {{ 'accueil.hero.chipPaid' | t }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chiffres -->
+  <section class="wrap stats" [attr.aria-label]="'accueil.stats.aria' | t">
+    @if (loading()) {
+      @for (p of placeholders; track p) {
+        <div class="stat"><span class="sk sk-num"></span><span class="sk sk-label"></span></div>
+      }
+    } @else if (data(); as d) {
+      <div class="stat"><strong>{{ d.stats.prestataires }}</strong><span>{{ 'accueil.stats.providers' | t }}</span></div>
+      <div class="stat"><strong>{{ d.stats.interventions }}</strong><span>{{ 'accueil.stats.interventions' | t }}</span></div>
+      <div class="stat">
+        <strong>{{ d.stats.avis ? ('accueil.stats.rating5' | t: { note: (d.stats.note_moyenne | appNumber: '1.1-1') }) : ('common.states.none' | t) }}</strong>
+        <span>{{ 'accueil.stats.rating' | t }}</span>
+      </div>
+      <div class="stat"><strong>{{ d.stats.gouvernorats }}</strong><span>{{ 'accueil.stats.gouvernorats' | t }}</span></div>
+    }
+  </section>
+
+  <!-- Services -->
+  <section class="section" id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">{{ 'accueil.services.eyebrow' | t }}</span>
+        <h2>{{ 'accueil.services.title' | t }}</h2>
+      </div>
+      <div class="services">
+        @if (loading()) {
+          @for (p of placeholders.concat(placeholders); track $index) {
+            <div class="service card"><span class="sk sk-icon"></span><span class="sk sk-line"></span></div>
+          }
+        } @else {
+          @for (c of data()?.categories ?? []; track c.id) {
+            <a class="service card" [routerLink]="c.slug ? ['/services', c.slug] : ['/services']">
+              <span class="service-icon"><i class="bi" [class]="'bi ' + (c.icone || 'bi-tools')"></i></span>
+              <div>
+                <strong>{{ c.nom }}</strong>
+                <small>{{ (c.prestataires_count > 1 ? 'accueil.services.providersMany' : 'accueil.services.providersOne') | t: { count: c.prestataires_count } }}</small>
+              </div>
+              <i class="bi bi-chevron-right go"></i>
+            </a>
+          }
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Fonctionnement -->
+  <section class="section alt" id="fonctionnement">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">{{ 'accueil.how.eyebrow' | t }}</span>
+        <h2>{{ 'accueil.how.title' | t }}</h2>
+      </div>
+      <ol class="steps">
+        @for (s of steps; track s.key; let i = $index) {
+          <li class="step card">
+            <span class="step-num">{{ i + 1 }}</span>
+            <span class="step-icon"><i class="bi" [class]="'bi ' + s.icon"></i></span>
+            <h3>{{ s.key + '.title' | t }}</h3>
+            <p>{{ s.key + '.text' | t }}</p>
+            @if (s.guide) {
+              <button type="button" class="step-video" (click)="guides.open(s.guide)">
+                <i class="bi bi-play-circle-fill"></i> {{ 'accueil.guides.watchStep' | t }}
+              </button>
+            }
+          </li>
+        }
+      </ol>
+
+      <div class="guides-block" id="guides">
+        <div class="guides-intro">
+          <span class="guides-icon"><i class="bi bi-play-btn-fill"></i></span>
+          <div>
+            <h3>{{ 'accueil.guides.title' | t }}</h3>
+            <p>{{ 'accueil.guides.lead' | t }}</p>
+          </div>
+        </div>
+        <app-video-guides #guides />
+      </div>
+    </div>
+  </section>
+
+  <!-- Meilleurs prestataires -->
+  @if (loading() || data()?.top_prestataires?.length) {
+    <section class="section" id="prestataires">
+      <div class="wrap">
+        <div class="section-head row-between">
+          <div>
+            <span class="eyebrow">{{ 'accueil.top.eyebrow' | t }}</span>
+            <h2>{{ 'accueil.top.title' | t }}</h2>
+          </div>
+          <a class="btn btn-outline" [routerLink]="['/register']" [queryParams]="{ role: 'client' }">{{ 'accueil.top.seeAll' | t }}</a>
+        </div>
+        <div class="pros">
+          @if (loading()) {
+            @for (p of placeholders; track p) {
+              <div class="pro card"><span class="sk sk-avatar-lg"></span><span class="sk sk-line"></span><span class="sk sk-line short"></span></div>
+            }
+          } @else {
+            @for (p of data()!.top_prestataires; track p.id) {
+              <article class="pro card">
+                <app-avatar [nom]="p.nom" [photoUrl]="p.photo_url" size="lg" />
+                <h3>{{ p.nom }}</h3>
+                <span class="badge badge-primary">{{ p.categorie }}</span>
+                <p class="pro-meta"><i class="bi bi-geo-alt"></i> {{ p.gouvernorat | gouv }}
+                  @if (p.experience_annees) { · {{ 'accueil.top.experience' | t: { count: p.experience_annees } }} }
+                </p>
+                <div class="pro-foot">
+                  @if (p.nb_avis > 0) {
+                    <span><app-star-rating [value]="p.note_moyenne" /> <small>({{ p.nb_avis }})</small></span>
+                  } @else {
+                    <span class="badge badge-info">{{ 'accueil.top.newOnDarFix' | t }}</span>
+                  }
+                  @if (p.tarif_horaire) {
+                    <strong>{{ p.tarif_horaire | appNumber: '1.0-0' }} {{ 'common.units.perHour' | t }}</strong>
+                  }
+                </div>
+              </article>
+            }
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Avis -->
+  @if (data()?.avis?.length) {
+    <section class="section alt" id="avis">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">{{ 'accueil.reviews.eyebrow' | t }}</span>
+          <h2>{{ 'accueil.reviews.title' | t }}</h2>
+        </div>
+        <div class="reviews">
+          @for (a of data()!.avis; track $index) {
+            <figure class="review card">
+              <app-star-rating [value]="a.note" />
+              <blockquote>{{ 'accueil.reviews.quote' | t: { text: a.commentaire } }}</blockquote>
+              <figcaption>
+                <strong>{{ a.auteur }}</strong>
+                <small>{{ a.categorie }}@if (a.gouvernorat) { · {{ a.gouvernorat | gouv }} }</small>
+              </figcaption>
+            </figure>
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Garanties -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">{{ 'accueil.guarantees.eyebrow' | t }}</span>
+        <h2>{{ 'accueil.guarantees.title' | t }}</h2>
+      </div>
+      <div class="guarantees">
+        @for (g of guarantees; track g.key) {
+          <div class="guarantee">
+            <span class="g-icon"><i class="bi" [class]="'bi ' + g.icon"></i></span>
+            <h3>{{ g.key + '.title' | t }}</h3>
+            <p>{{ g.key + '.text' | t }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Appel aux artisans -->
+  <section class="wrap">
+    <div class="cta">
+      <div>
+        <h2>{{ 'accueil.cta.title' | t }}</h2>
+        <p>{{ 'accueil.cta.text' | t }}</p>
+      </div>
+      <a class="btn btn-light btn-lg" [routerLink]="['/register']" [queryParams]="{ role: 'prestataire' }">
+        {{ 'accueil.cta.button' | t }} <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand"><span class="brand-icon"><i class="bi bi-house-gear-fill"></i></span><span>DarFix</span></div>
+    <nav>
+      <a href="#services">{{ 'accueil.nav.services' | t }}</a>
+      <a href="#fonctionnement">{{ 'accueil.nav.howItWorks' | t }}</a>
+      <a routerLink="/login">{{ 'accueil.nav.login' | t }}</a>
+      <a routerLink="/register">{{ 'accueil.nav.register' | t }}</a>
+      <a routerLink="/services">{{ 'services.footer.allServices' | t }}</a>
+      <a routerLink="/confidentialite">{{ 'legal.privacyLink' | t }}</a>
+      <a routerLink="/conditions">{{ 'legal.termsLink' | t }}</a>
+    </nav>
+    <small>{{ 'accueil.footer.copyright' | t: { year: year } }}</small>
+  </div>
+</footer>

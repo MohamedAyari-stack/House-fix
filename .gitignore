@@ -1,0 +1,19 @@
+# Éditeur / outils locaux
+.vscode/
+.idea/
+.claude/
+
+# Secrets : jamais sur GitHub (copier les .env.example)
+.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dépendances et fichiers générés (déjà ignorés par chaque sous-projet, repris ici par sécurité)
+**/node_modules/
+**/vendor/
+**/.venv/
+**/__pycache__/
+**/dist/
+**/.angular/
+*.log

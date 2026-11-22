@@ -1,0 +1,69 @@
+<span class="blob one"></span>
+<span class="blob two"></span>
+
+<div class="top">
+  <a class="logo" routerLink="/" [attr.aria-label]="'auth.common.homeAria' | t">
+    <span class="logo-icon"><i class="bi bi-house-gear-fill"></i></span>
+    <div>
+      <strong>DarFix</strong>
+      <small>{{ 'common.tagline' | t }}</small>
+    </div>
+  </a>
+  <div class="top-actions">
+    <app-lang-switch />
+    <app-theme-toggle />
+  </div>
+</div>
+
+<div class="center">
+  <form class="auth-card" (ngSubmit)="submit()">
+    <h1>{{ 'auth.login.title' | t }}</h1>
+    <p class="subtitle">{{ 'auth.login.subtitle' | t }}</p>
+
+    @if (error()) {
+      <div class="alert alert-danger" style="margin-bottom: 14px">{{ error() }}</div>
+    }
+
+    <div class="form-group">
+      <label class="form-label" for="email">{{ 'auth.common.emailLabel' | t }}</label>
+      <input id="email" class="form-control" type="email" name="email" [(ngModel)]="email" autocomplete="email" [placeholder]="'auth.common.emailPlaceholder' | t" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">{{ 'auth.common.passwordLabel' | t }}</label>
+      <div class="password">
+        <input
+          id="password"
+          class="form-control"
+          [type]="showPassword() ? 'text' : 'password'"
+          name="password"
+          [(ngModel)]="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+        />
+        <button type="button" (click)="showPassword.set(!showPassword())" [attr.aria-label]="'auth.common.showPassword' | t">
+          <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+        </button>
+      </div>
+    </div>
+
+    <a class="small" style="font-weight: 600" routerLink="/forgot-password">{{ 'auth.login.forgotPassword' | t }}</a>
+
+    <button class="btn btn-primary btn-block" style="margin-top: 16px; padding: 12px" type="submit" [disabled]="loading()">
+      {{ (loading() ? 'auth.login.submitting' : 'auth.login.submit') | t }}
+    </button>
+
+    <p class="footer-link">{{ 'auth.login.noAccount' | t }} <a routerLink="/register">{{ 'auth.login.createAccount' | t }}</a></p>
+
+    <div class="demo">
+      {{ 'auth.login.demo' | t: { code: 'password' } }}
+      @for (d of demoAccounts; track d.email) {
+        <button type="button" (click)="fillDemo(d.email)">{{ d.label | t }}</button>
+      }
+    </div>
+    <nav class="legal-links">
+      <a routerLink="/confidentialite">{{ 'legal.privacyLink' | t }}</a>
+      <a routerLink="/conditions">{{ 'legal.termsLink' | t }}</a>
+    </nav>
+  </form>
+</div>

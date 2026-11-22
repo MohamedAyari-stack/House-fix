@@ -1,0 +1,89 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>{{ 'client.rendezVous.title' | t }}</h2>
+      <p>{{ 'client.rendezVous.subtitle' | t }}</p>
+    </div>
+    <a class="btn btn-primary" routerLink="/client/rendez-vous/nouveau"><i class="bi bi-plus-lg"></i> {{ 'client.rendezVous.newShort' | t }}</a>
+  </div>
+
+  <div class="tabs">
+    @for (t of tabs; track t.key) {
+      <button type="button" [class.active]="filtre() === t.key" (click)="filtre.set(t.key)">
+        {{ t.label | t }} ({{ count(t.key) }})
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (filtered().length === 0) {
+    <div class="card empty-state">
+      <i class="bi bi-calendar-x"></i>
+      @if (filtre() === 'tous') {
+        {{ 'client.rendezVous.empty' | t }}
+        <div class="cta"><a class="btn btn-primary btn-sm" routerLink="/client/rendez-vous/nouveau">{{ 'client.shared.takeRdv' | t }}</a></div>
+      } @else {
+        {{ 'client.rendezVous.emptyStatus' | t }}
+      }
+    </div>
+  } @else {
+    <div class="grid-cards">
+      @for (r of filtered(); track r.id) {
+        <div class="card rdv">
+          <div class="card-header">
+            <span class="muted small">{{ 'client.shared.rdvRef' | t: { id: r.id } }}</span>
+            <app-status-badge [status]="r.status" />
+          </div>
+
+          <div class="body">
+            <strong class="categorie">{{ r.categorie.nom }}</strong>
+            @if (r.description) { <p class="muted description">{{ r.description }}</p> }
+            <div class="info-line">
+              <i class="bi bi-calendar3"></i>
+              <span>{{ r.date | appDate: 'date' }}&nbsp;&nbsp;{{ r.heure ?? ('client.rendezVous.timeTbc' | t) }}</span>
+            </div>
+            <div class="info-line"><i class="bi bi-person"></i> <span>{{ 'client.rendezVous.prestataire' | t: { name: r.prestataire.nom } }}</span></div>
+            <div class="info-line"><i class="bi bi-geo-alt"></i> <span>{{ 'client.rendezVous.address' | t: { address: r.address ?? '—' } }}</span></div>
+
+            @if (r.status === 'refuse' && r.motif_refus) {
+              <div class="alert alert-danger small">{{ 'client.rendezVous.refusalReason' | t: { motif: r.motif_refus } }}</div>
+            }
+            @if (r.status === 'termine' && !r.facture) {
+              <p class="muted small"><i class="bi bi-hourglass"></i> {{ 'client.rendezVous.invoiceSoon' | t }}</p>
+            }
+            @if (r.evaluation) {
+              <p class="small rated"><i class="bi bi-star-fill"></i> {{ 'client.rendezVous.rated' | t: { note: r.evaluation.note } }}</p>
+            }
+          </div>
+
+          <div class="card-footer">
+            <a class="btn btn-outline btn-sm" [href]="maps(r)" target="_blank" rel="noopener"><i class="bi bi-map"></i> {{ 'client.rendezVous.openMaps' | t }}</a>
+            @if (r.facture) {
+              <a class="btn btn-violet btn-sm" [routerLink]="['/client/factures', r.facture.id]"><i class="bi bi-receipt"></i> {{ 'client.rendezVous.seeInvoice' | t }}</a>
+            }
+            @if (canEvaluate(r)) {
+              <button type="button" class="btn btn-primary btn-sm" (click)="evaluating.set(r)"><i class="bi bi-star"></i> {{ 'client.shared.evaluate' | t }}</button>
+            }
+            @if (canCancel(r)) {
+              <button type="button" class="btn btn-ghost btn-sm cancel" (click)="cancel(r)" [disabled]="busy() === r.id">
+                <i class="bi bi-x-circle"></i> {{ 'common.actions.cancel' | t }}
+              </button>
+            }
+            <a
+              class="btn btn-outline btn-sm btn-icon msg"
+              routerLink="/client/messages"
+              [queryParams]="{ user: r.prestataire_id }"
+              [title]="'client.rendezVous.sendMessage' | t"
+              [attr.aria-label]="'client.rendezVous.sendMessageAria' | t"
+            ><i class="bi bi-chat-dots"></i></a>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (evaluating(); as r) {
+  <app-evaluation-modal [rdv]="r" (saved)="onEvaluated(r, $event)" (closed)="evaluating.set(null)" />
+}

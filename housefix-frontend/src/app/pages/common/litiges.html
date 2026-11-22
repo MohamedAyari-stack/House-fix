@@ -1,0 +1,83 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <span class="chip">{{ 'pages.litiges.chip' | t }}</span>
+      <h2 class="title">{{ 'pages.litiges.title' | t }}</h2>
+      <p>{{ 'pages.litiges.intro' | t }}</p>
+    </div>
+  </div>
+
+  <form class="card" (ngSubmit)="submit()" novalidate>
+    <div class="card-header">
+      <h3><i class="bi bi-exclamation-triangle"></i> {{ 'pages.litiges.newTitle' | t }}</h3>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="rdv">{{ 'pages.litiges.rdvLabel' | t }}</label>
+      <select id="rdv" class="form-control" [class.invalid]="errors()['rendez_vous_id']" name="rdv" [(ngModel)]="form.rendez_vous_id">
+        <option [ngValue]="null">{{ 'pages.litiges.rdvPlaceholder' | t }}</option>
+        @for (r of rendezVous(); track r.id) {
+          <option [ngValue]="r.id">{{ rdvLabel(r) }}</option>
+        }
+      </select>
+      @if (errors()['rendez_vous_id']) { <span class="form-error">{{ errors()['rendez_vous_id'] }}</span> }
+      @if (rendezVous().length === 0) { <span class="form-hint">{{ 'pages.litiges.noRdv' | t }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="sujet">{{ 'pages.litiges.sujetLabel' | t }}</label>
+      <input id="sujet" class="form-control" [class.invalid]="errors()['sujet']" name="sujet" [(ngModel)]="form.sujet" maxlength="255" [placeholder]="'pages.litiges.sujetPlaceholder' | t" />
+      @if (errors()['sujet']) { <span class="form-error">{{ errors()['sujet'] }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="description">{{ 'pages.litiges.descriptionLabel' | t }}</label>
+      <textarea id="description" class="form-control" [class.invalid]="errors()['description']" name="description" rows="5" [(ngModel)]="form.description" [placeholder]="'pages.litiges.descriptionPlaceholder' | t"></textarea>
+      @if (errors()['description']) { <span class="form-error">{{ errors()['description'] }}</span> }
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block" [disabled]="saving()">
+      <i class="bi bi-send"></i> {{ (saving() ? 'common.actions.sending' : 'pages.litiges.submit') | t }}
+    </button>
+  </form>
+
+  <div class="stack">
+    <h3>{{ 'pages.litiges.mine' | t }}</h3>
+
+    @if (loading()) {
+      <div class="spinner"></div>
+    } @else if (litiges().length === 0) {
+      <div class="card empty-state">
+        <i class="bi bi-shield-check"></i>
+        {{ 'pages.litiges.empty' | t }}
+      </div>
+    } @else {
+      @for (l of litiges(); track l.id) {
+        <div class="card litige">
+          <div class="row-between">
+            <strong class="sujet">{{ l.sujet }}</strong>
+            <app-status-badge [status]="l.statut" kind="litige" />
+          </div>
+          <div class="meta">
+            <span><i class="bi bi-calendar3"></i> {{ l.created_at | appDate: 'date' }}</span>
+            <span><i class="bi bi-hash"></i>{{ 'pages.litiges.rdvRef' | t: { id: l.rendez_vous_id } }} · {{ l.rendez_vous?.categorie?.nom }} · {{ l.rendez_vous?.date | appDate: 'date' }}</span>
+            <span>
+              <i class="bi bi-people"></i>
+              {{ l.declarant_id === meId() ? ('pages.litiges.you' | t) : l.declarant?.nom }}
+              <i class="bi bi-arrow-right"></i>
+              {{ l.cible_id === meId() ? ('pages.litiges.you' | t) : l.cible?.nom }}
+            </span>
+          </div>
+          <p class="description">{{ l.description }}</p>
+          @if (l.reponse_admin) {
+            <div class="answer">
+              <strong><i class="bi bi-shield-check"></i> {{ 'pages.litiges.adminAnswer' | t }}</strong>
+              <p>{{ l.reponse_admin }}</p>
+              @if (l.traite_le) { <span class="small">{{ 'pages.litiges.treatedOn' | t: { date: (l.traite_le | appDate: 'datetime') } }}</span> }
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>

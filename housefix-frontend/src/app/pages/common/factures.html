@@ -1,0 +1,121 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <span class="chip">{{ 'pages.factures.chip' | t }}</span>
+      <p>{{ (isClient() ? 'pages.factures.introClient' : 'pages.factures.introPrestataire') | t }}</p>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="stat-card">
+      <span class="chip">{{ 'pages.factures.stats.paidChip' | t }}</span>
+      <span class="stat-icon"><i class="bi bi-check2-circle"></i></span>
+      <div class="stat-label">{{ (isClient() ? 'pages.factures.stats.totalPaidClient' : 'pages.factures.stats.totalPaidPrestataire') | t }}</div>
+      <div class="stat-value">{{ totalPaye() | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</div>
+      <div class="stat-sub">{{ 'pages.factures.stats.paidSub' | t }}</div>
+    </div>
+    <div class="stat-card">
+      <span class="chip">{{ 'pages.factures.stats.unpaidChip' | t }}</span>
+      <span class="stat-icon"><i class="bi bi-hourglass-split"></i></span>
+      <div class="stat-label">{{ 'pages.factures.stats.unpaidLabel' | t }}</div>
+      <div class="stat-value">{{ totalImpaye() | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</div>
+      <div class="stat-sub">{{ 'pages.factures.stats.unpaidSub' | t }}</div>
+    </div>
+    <div class="stat-card">
+      <span class="chip">{{ 'pages.factures.stats.historyChip' | t }}</span>
+      <span class="stat-icon"><i class="bi bi-receipt"></i></span>
+      <div class="stat-label">{{ 'pages.factures.stats.countLabel' | t }}</div>
+      <div class="stat-value">{{ factures().length }}</div>
+      <div class="stat-sub">{{ 'pages.factures.stats.countSub' | t }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="tabs">
+        @for (t of tabs; track t) {
+          <button type="button" [class.active]="filtre() === t" (click)="filtre.set(t)">
+            {{ 'pages.factures.tabs.' + t | t }} ({{ count(t) }})
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="spinner"></div>
+    } @else if (filtered().length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-receipt"></i>
+        {{ 'pages.factures.empty' | t }}
+      </div>
+    } @else {
+      <div class="table-wrap desktop-only">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ 'pages.factures.table.numero' | t }}</th>
+              <th>{{ 'pages.factures.table.date' | t }}</th>
+              <th>{{ 'pages.factures.table.service' | t }}</th>
+              <th>{{ (isClient() ? 'common.roles.prestataire' : 'common.roles.client') | t }}</th>
+              <th class="text-right">{{ 'pages.factures.table.montant' | t }}</th>
+              <th>{{ 'pages.factures.table.paiement' | t }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of filtered(); track f.id) {
+              <tr>
+                <td><strong>{{ f.numero }}</strong></td>
+                <td class="nowrap">{{ f.date | appDate: 'date' }}</td>
+                <td>{{ f.rendez_vous?.categorie?.nom ?? '—' }}</td>
+                <td>
+                  <div class="row party">
+                    <app-avatar [nom]="otherParty(f)?.nom" [photoUrl]="otherParty(f)?.photo_url" />
+                    <span>{{ otherParty(f)?.nom ?? '—' }}</span>
+                  </div>
+                </td>
+                <td class="text-right nowrap">
+                  <strong>{{ f.montant | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</strong>
+                  <div class="muted small">{{ 'pages.factures.table.htVat' | t: { ht: (f.montant_ht | appNumber: '1.2-2'), tva: (f.montant_tva | appNumber: '1.2-2'), taux: (f.taux_tva | appNumber: '1.0-2') } }}</div>
+                </td>
+                <td><app-status-badge [status]="f.statut_paiement" kind="paiement" /></td>
+                <td class="text-right nowrap">
+                  <a class="btn btn-outline btn-sm" [routerLink]="[base(), 'factures', f.id]"><i class="bi bi-eye"></i> {{ 'common.actions.see' | t }}</a>
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="pdf(f)" [disabled]="downloading() === f.id">
+                    <i class="bi bi-file-earmark-pdf"></i> {{ 'pages.factures.pdf' | t }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mobile-only stack">
+        @for (f of filtered(); track f.id) {
+          <div class="facture-item">
+            <div class="row-between">
+              <strong>{{ f.numero }}</strong>
+              <app-status-badge [status]="f.statut_paiement" kind="paiement" />
+            </div>
+            <div class="muted small">
+              {{ f.date | appDate: 'date' }} · {{ f.rendez_vous?.categorie?.nom ?? '—' }} · {{ otherParty(f)?.nom ?? '—' }}
+            </div>
+            <div class="row-between">
+              <div>
+                <strong>{{ f.montant | appNumber: '1.2-2' }} {{ 'common.units.currency' | t }}</strong>
+                <div class="muted small">{{ 'pages.factures.table.htVat' | t: { ht: (f.montant_ht | appNumber: '1.2-2'), tva: (f.montant_tva | appNumber: '1.2-2'), taux: (f.taux_tva | appNumber: '1.0-2') } }}</div>
+              </div>
+              <div class="row">
+                <a class="btn btn-outline btn-sm" [routerLink]="[base(), 'factures', f.id]"><i class="bi bi-eye"></i> {{ 'common.actions.see' | t }}</a>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="pdf(f)" [disabled]="downloading() === f.id">
+                  <i class="bi bi-file-earmark-pdf"></i> {{ 'pages.factures.pdf' | t }}
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

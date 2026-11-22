@@ -1,0 +1,87 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.filters .form-group {
+  margin-bottom: 0;
+}
+
+.search {
+  position: relative;
+}
+.search i {
+  position: absolute;
+  inset-inline-start: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+.search .form-control {
+  padding-inline-start: 36px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+.presta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reco-chip {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 14px;
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+
+.head {
+  flex-wrap: nowrap;
+  padding-inline-end: 100px;
+}
+
+.name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tarif {
+  color: var(--primary);
+}
+
+.dot {
+  font-size: 6px;
+}
+
+.card-footer .btn {
+  flex: 1;
+}

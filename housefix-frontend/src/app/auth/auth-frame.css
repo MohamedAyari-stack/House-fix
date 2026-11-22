@@ -1,0 +1,238 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.blob.one {
+  width: 320px;
+  height: 320px;
+  inset-inline-start: -80px;
+  top: 25%;
+  background: #bfdbfe;
+}
+.blob.two {
+  width: 360px;
+  height: 360px;
+  inset-inline-end: -100px;
+  bottom: -80px;
+  background: #c7d2fe;
+}
+
+:host-context([data-theme=dark]) .blob {
+  opacity: 0.18;
+}
+
+.top {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  z-index: 2;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+}
+.logo .logo-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+}
+.logo strong {
+  display: block;
+  color: #4f46e5;
+  font-family: "Poppins", sans-serif;
+  line-height: 1.1;
+}
+.logo small {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 20px 16px 40px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  padding: 30px 28px;
+}
+.auth-card h1 {
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  font-size: 1.9rem;
+}
+.auth-card .subtitle {
+  color: var(--text-muted);
+  margin: 6px 0 22px;
+  font-size: 13px;
+}
+
+.password {
+  position: relative;
+}
+.password .form-control {
+  padding-inline-end: 42px;
+}
+.password button {
+  position: absolute;
+  inset-inline-end: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.footer-link {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.footer-link a {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Mot de passe oublié : indicateur d'étapes et champ du code. */
+.steps {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 18px;
+  counter-reset: step;
+}
+.steps li {
+  flex: 1;
+  padding-top: 8px;
+  border-top: 3px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  counter-increment: step;
+}
+.steps li::before {
+  content: counter(step) ". ";
+}
+.steps li.active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.steps li.done {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.code-input {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  font-variant-numeric: tabular-nums;
+}
+.code-input.is-invalid {
+  border-color: var(--danger);
+}
+
+.demo {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.demo button {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+@media (max-width: 420px) {
+  .top {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .logo small {
+    display: none;
+  }
+}
+
+/* Inscription : acceptation des conditions et de la politique de confidentialité. */
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.consent-label input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--primary);
+}
+.consent-label a {
+  font-weight: 700;
+}
+
+/* Liens légaux sous les formulaires de connexion et d'inscription. */
+.legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 12px;
+}
+.legal-links a {
+  color: var(--text-muted);
+}

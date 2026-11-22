@@ -1,0 +1,200 @@
+<div class="page" [attr.data-rev]="rev()">
+  @if (user(); as u) {
+    <div class="page-header">
+      <div>
+        <span class="chip">{{ 'pages.parametres.chip' | t }}</span>
+        <p>{{ (isPrestataire() ? 'pages.parametres.introPrestataire' : 'pages.parametres.intro') | t }}</p>
+      </div>
+    </div>
+
+    <!-- Profil -->
+    <form class="card" (ngSubmit)="save('profil')" novalidate>
+      <div class="card-header">
+        <h3><i class="bi bi-person-circle"></i> {{ 'pages.parametres.profil.title' | t }}</h3>
+      </div>
+
+      <div class="identity">
+        <strong>{{ u.nom }}</strong>
+        <span class="muted small">{{ u.email }}</span>
+      </div>
+      <app-photo-dropzone [nom]="u.nom" [photoUrl]="u.photo_url" (uploaded)="onPhotoUploaded($event)" />
+
+      <div class="divider"></div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="nom">{{ 'pages.parametres.profil.nom' | t }}</label>
+          <input id="nom" class="form-control" [class.invalid]="errors()['nom']" name="nom" [(ngModel)]="form.nom" autocomplete="name" />
+          @if (errors()['nom']) { <span class="form-error">{{ errors()['nom'] }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="email">{{ 'pages.parametres.profil.email' | t }}</label>
+          <input id="email" class="form-control" dir="ltr" [value]="u.email" readonly disabled />
+          <span class="form-hint">{{ 'pages.parametres.profil.emailHint' | t }}</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="telephone">{{ 'pages.parametres.profil.telephone' | t }}</label>
+          <input id="telephone" class="form-control" [class.invalid]="errors()['telephone']" name="telephone" [(ngModel)]="form.telephone" placeholder="+216 21 123 456" autocomplete="tel" />
+          @if (errors()['telephone']) { <span class="form-error">{{ errors()['telephone'] }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="gouvernorat">{{ 'pages.parametres.profil.gouvernorat' | t }}</label>
+          <select id="gouvernorat" class="form-control" [class.invalid]="errors()['gouvernorat']" name="gouvernorat" [(ngModel)]="form.gouvernorat">
+            <option value="">{{ 'pages.parametres.profil.gouvernoratPlaceholder' | t }}</option>
+            @for (g of gouvernorats; track g) { <option [value]="g">{{ g | gouv }}</option> }
+          </select>
+          @if (errors()['gouvernorat']) { <span class="form-error">{{ errors()['gouvernorat'] }}</span> }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="address">{{ 'pages.parametres.profil.address' | t }}</label>
+        <input id="address" class="form-control" [class.invalid]="errors()['address']" name="address" [(ngModel)]="form.address" (ngModelChange)="onAddressChange()" [placeholder]="'pages.parametres.profil.addressPlaceholder' | t" autocomplete="street-address" />
+        @if (errors()['address']) { <span class="form-error">{{ errors()['address'] }}</span> }
+      </div>
+
+      <div class="position">
+        <button type="button" class="btn btn-outline btn-sm" (click)="locate()" [disabled]="locating()">
+          <i class="bi bi-crosshair"></i> {{ (locating() ? 'pages.parametres.profil.locating' : 'pages.parametres.profil.useLocation') | t }}
+        </button>
+        @if (coords(); as c) {
+          <span class="muted small"><i class="bi bi-geo-alt-fill"></i> <bdi dir="ltr">{{ c.lat | appNumber: '1.5-5' }}, {{ c.lng | appNumber: '1.5-5' }}</bdi></span>
+        } @else {
+          <span class="muted small">{{ (form.address.trim() ? 'pages.parametres.profil.positionFromAddress' : 'pages.parametres.profil.noPosition') | t }}</span>
+        }
+      </div>
+
+      <div class="card-footer end">
+        <button type="submit" class="btn btn-primary" [disabled]="saving() !== null">
+          <i class="bi bi-check2"></i> {{ (saving() === 'profil' ? 'common.actions.saving' : 'pages.parametres.profil.save') | t }}
+        </button>
+      </div>
+    </form>
+
+    <!-- Profil professionnel -->
+    @if (isPrestataire()) {
+      <form class="card" (ngSubmit)="save('pro')" novalidate>
+        <div class="card-header">
+          <h3><i class="bi bi-briefcase"></i> {{ 'pages.parametres.pro.title' | t }}</h3>
+          @if (validation(); as v) {
+            <span class="badge" [class]="'badge ' + v.css"><i class="bi" [class]="'bi ' + v.icon"></i> {{ v.key | t }}</span>
+          }
+        </div>
+
+        <div class="availability">
+          <div>
+            <strong>{{ 'pages.parametres.pro.availability' | t }}</strong>
+            <div class="muted small">
+              {{ (available() ? 'pages.parametres.pro.available' : 'pages.parametres.pro.unavailable') | t }}
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" [attr.aria-label]="'pages.parametres.pro.availability' | t" [checked]="available()" [disabled]="togglingAvailability()" (change)="toggleAvailability($any($event.target).checked)" />
+            <span></span>
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="categorie">{{ 'pages.parametres.pro.categorie' | t }}</label>
+            <select id="categorie" class="form-control" [class.invalid]="errors()['categorie_service_id']" name="categorie" [(ngModel)]="pro.categorie_service_id">
+              <option [ngValue]="null">{{ 'pages.parametres.pro.categoriePlaceholder' | t }}</option>
+              @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.nom }}</option> }
+            </select>
+            @if (errors()['categorie_service_id']) { <span class="form-error">{{ errors()['categorie_service_id'] }}</span> }
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="specialite">{{ 'pages.parametres.pro.specialite' | t }}</label>
+            <input id="specialite" class="form-control" [class.invalid]="errors()['specialite']" name="specialite" [(ngModel)]="pro.specialite" [placeholder]="'pages.parametres.pro.specialitePlaceholder' | t" />
+            @if (errors()['specialite']) { <span class="form-error">{{ errors()['specialite'] }}</span> }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">{{ 'pages.parametres.pro.description' | t }}</label>
+          <textarea id="description" class="form-control" [class.invalid]="errors()['description']" name="description" rows="4" [(ngModel)]="pro.description" [placeholder]="'pages.parametres.pro.descriptionPlaceholder' | t"></textarea>
+          @if (errors()['description']) { <span class="form-error">{{ errors()['description'] }}</span> }
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="form-label" for="experience">{{ 'pages.parametres.pro.experience' | t }}</label>
+            <input id="experience" type="number" min="0" class="form-control" [class.invalid]="errors()['experience_annees']" name="experience" [(ngModel)]="pro.experience_annees" />
+            @if (errors()['experience_annees']) { <span class="form-error">{{ errors()['experience_annees'] }}</span> }
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="tarif">{{ 'pages.parametres.pro.tarif' | t }}</label>
+            <input id="tarif" type="number" min="0" step="0.5" class="form-control" [class.invalid]="errors()['tarif_horaire']" name="tarif" [(ngModel)]="pro.tarif_horaire" />
+            @if (errors()['tarif_horaire']) { <span class="form-error">{{ errors()['tarif_horaire'] }}</span> }
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="disponibilites">{{ 'pages.parametres.pro.disponibilites' | t }}</label>
+            <input id="disponibilites" class="form-control" [class.invalid]="errors()['disponibilites']" name="disponibilites" [(ngModel)]="pro.disponibilites" [placeholder]="'pages.parametres.pro.disponibilitesPlaceholder' | t" />
+            @if (errors()['disponibilites']) { <span class="form-error">{{ errors()['disponibilites'] }}</span> }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="certifications">{{ 'pages.parametres.pro.certifications' | t }}</label>
+          <input id="certifications" class="form-control" [class.invalid]="errors()['certifications']" name="certifications" [(ngModel)]="pro.certifications" [placeholder]="'pages.parametres.pro.certificationsPlaceholder' | t" />
+          @if (errors()['certifications']) { <span class="form-error">{{ errors()['certifications'] }}</span> }
+        </div>
+
+        <div class="card-footer end">
+          <button type="submit" class="btn btn-primary" [disabled]="saving() !== null">
+            <i class="bi bi-check2"></i> {{ (saving() === 'pro' ? 'common.actions.saving' : 'pages.parametres.pro.save') | t }}
+          </button>
+        </div>
+      </form>
+    }
+
+    <!-- Langue -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="bi bi-translate"></i> {{ 'pages.parametres.langue.title' | t }}</h3>
+      </div>
+      <div class="lang-row">
+        <span class="muted small" id="lang-hint">{{ 'pages.parametres.langue.hint' | t }}</span>
+        <div class="tabs" role="radiogroup" aria-labelledby="lang-hint">
+          @for (l of langs; track l.code) {
+            <button type="button" role="radio" [attr.lang]="l.code" [attr.aria-checked]="lang() === l.code" [class.active]="lang() === l.code" (click)="chooseLang(l.code)">
+              {{ l.label }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Sécurité -->
+    <form class="card" (ngSubmit)="changePassword()" novalidate>
+      <div class="card-header">
+        <h3><i class="bi bi-shield-lock"></i> {{ 'pages.parametres.securite.title' | t }}</h3>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="showPwd.set(!showPwd())">
+          <i class="bi" [class.bi-eye]="!showPwd()" [class.bi-eye-slash]="showPwd()"></i> {{ (showPwd() ? 'pages.parametres.securite.hide' : 'pages.parametres.securite.show') | t }}
+        </button>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label" for="current_password">{{ 'pages.parametres.securite.current' | t }}</label>
+          <input id="current_password" class="form-control" [class.invalid]="pwdErrors()['current_password']" [type]="showPwd() ? 'text' : 'password'" name="current_password" [(ngModel)]="pwd.current_password" autocomplete="current-password" />
+          @if (pwdErrors()['current_password']) { <span class="form-error">{{ pwdErrors()['current_password'] }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">{{ 'pages.parametres.securite.new' | t }}</label>
+          <input id="password" class="form-control" [class.invalid]="pwdErrors()['password']" [type]="showPwd() ? 'text' : 'password'" name="password" [(ngModel)]="pwd.password" autocomplete="new-password" [placeholder]="'pages.parametres.securite.newPlaceholder' | t" />
+          @if (pwdErrors()['password']) { <span class="form-error">{{ pwdErrors()['password'] }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password_confirmation">{{ 'pages.parametres.securite.confirm' | t }}</label>
+          <input id="password_confirmation" class="form-control" [class.invalid]="pwdErrors()['password_confirmation']" [type]="showPwd() ? 'text' : 'password'" name="password_confirmation" [(ngModel)]="pwd.password_confirmation" autocomplete="new-password" />
+          @if (pwdErrors()['password_confirmation']) { <span class="form-error">{{ pwdErrors()['password_confirmation'] }}</span> }
+        </div>
+      </div>
+      <div class="card-footer end">
+        <button type="submit" class="btn btn-violet" [disabled]="pwdSaving()">
+          <i class="bi bi-key"></i> {{ (pwdSaving() ? 'pages.parametres.securite.changing' : 'pages.parametres.securite.change') | t }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -1,0 +1,117 @@
+<span class="blob one"></span>
+<span class="blob two"></span>
+
+<div class="top">
+  <a class="logo" routerLink="/" [attr.aria-label]="'auth.common.homeAria' | t">
+    <span class="logo-icon"><i class="bi bi-house-gear-fill"></i></span>
+    <div>
+      <strong>DarFix</strong>
+      <small>{{ 'common.tagline' | t }}</small>
+    </div>
+  </a>
+  <div class="top-actions">
+    <app-lang-switch />
+    <app-theme-toggle />
+  </div>
+</div>
+
+<div class="center">
+  <form class="auth-card" (ngSubmit)="submit()" novalidate>
+    <h1>{{ 'auth.register.title' | t }}</h1>
+    <p class="subtitle">{{ 'auth.register.subtitle' | t }}</p>
+
+    @if (error()) {
+      <div class="alert alert-danger" style="margin-bottom: 14px">{{ error() }}</div>
+    }
+
+    <div class="form-group">
+      <label class="form-label" for="nom">{{ 'auth.register.nameLabel' | t }}</label>
+      <input id="nom" class="form-control" [class.invalid]="errors()['nom']" name="nom" [(ngModel)]="form.nom" [placeholder]="'auth.register.namePlaceholder' | t" autocomplete="name" />
+      @if (errors()['nom']) { <span class="form-error">{{ errors()['nom'] }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="email">{{ 'auth.common.emailLabel' | t }}</label>
+      <input id="email" class="form-control" [class.invalid]="errors()['email']" type="email" name="email" [(ngModel)]="form.email" [placeholder]="'auth.common.emailPlaceholder' | t" autocomplete="email" />
+      @if (errors()['email']) { <span class="form-error">{{ errors()['email'] }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="gouvernorat">{{ 'auth.register.gouvernoratLabel' | t }}</label>
+      <select id="gouvernorat" class="form-control" [class.invalid]="errors()['gouvernorat']" name="gouvernorat" [(ngModel)]="form.gouvernorat">
+        <option value="">{{ 'auth.register.gouvernoratPlaceholder' | t }}</option>
+        @for (g of gouvernorats; track g) {
+          <option [value]="g">{{ g | gouv }}</option>
+        }
+      </select>
+      @if (errors()['gouvernorat']) { <span class="form-error">{{ errors()['gouvernorat'] }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="telephone">{{ 'auth.register.phoneLabel' | t }}</label>
+      <input id="telephone" class="form-control" [class.invalid]="errors()['telephone']" name="telephone" [(ngModel)]="form.telephone" placeholder="+216 21 123 456" autocomplete="tel" />
+      @if (errors()['telephone']) { <span class="form-error">{{ errors()['telephone'] }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="role">{{ 'auth.register.roleLabel' | t }}</label>
+      <select id="role" class="form-control" [class.invalid]="errors()['role']" name="role" [(ngModel)]="form.role">
+        <option value="">{{ 'auth.register.rolePlaceholder' | t }}</option>
+        <option value="client">{{ 'auth.register.roleClient' | t }}</option>
+        <option value="prestataire">{{ 'auth.register.rolePrestataire' | t }}</option>
+      </select>
+      @if (errors()['role']) { <span class="form-error">{{ errors()['role'] }}</span> }
+    </div>
+
+    @if (form.role === 'prestataire') {
+      <div class="form-group">
+        <label class="form-label" for="categorie">{{ 'auth.register.jobLabel' | t }}</label>
+        <select id="categorie" class="form-control" [class.invalid]="errors()['categorie_service_id']" name="categorie" [(ngModel)]="form.categorie_service_id">
+          <option [ngValue]="null">{{ 'auth.register.jobPlaceholder' | t }}</option>
+          @for (c of categories(); track c.id) {
+            <option [ngValue]="c.id">{{ c.nom }}</option>
+          }
+        </select>
+        @if (errors()['categorie_service_id']) { <span class="form-error">{{ errors()['categorie_service_id'] }}</span> }
+        <span class="form-hint">{{ 'auth.register.jobHint' | t }}</span>
+      </div>
+    }
+
+    <div class="form-group">
+      <label class="form-label" for="password">{{ 'auth.common.passwordLabel' | t }}</label>
+      <div class="password">
+        <input id="password" class="form-control" [class.invalid]="errors()['password']" [type]="showPassword() ? 'text' : 'password'" name="password" [(ngModel)]="form.password" autocomplete="new-password" [placeholder]="'auth.common.newPasswordPlaceholder' | t" />
+        <button type="button" (click)="showPassword.set(!showPassword())" [attr.aria-label]="'auth.common.showPassword' | t">
+          <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+        </button>
+      </div>
+      @if (errors()['password']) { <span class="form-error">{{ errors()['password'] }}</span> }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password_confirmation">{{ 'auth.common.confirmPassword' | t }}</label>
+      <input id="password_confirmation" class="form-control" [class.invalid]="errors()['password_confirmation']" [type]="showPassword() ? 'text' : 'password'" name="password_confirmation" [(ngModel)]="form.password_confirmation" autocomplete="new-password" />
+      @if (errors()['password_confirmation']) { <span class="form-error">{{ errors()['password_confirmation'] }}</span> }
+    </div>
+
+    <div class="form-group consent">
+      <label class="consent-label">
+        <input type="checkbox" name="accepte_conditions" [(ngModel)]="form.accepte_conditions" [attr.aria-invalid]="!!errors()['accepte_conditions']" aria-describedby="consent-error" />
+        <span>
+          {{ 'legal.consent.before' | t }}<a routerLink="/conditions" target="_blank">{{ 'legal.consent.terms' | t }}</a>{{ 'legal.consent.middle' | t }}<a routerLink="/confidentialite" target="_blank">{{ 'legal.consent.privacy' | t }}</a>{{ 'legal.consent.after' | t }}
+        </span>
+      </label>
+      @if (errors()['accepte_conditions']) { <span class="form-error" id="consent-error">{{ errors()['accepte_conditions'] }}</span> }
+    </div>
+
+    <button class="btn btn-primary btn-block" style="padding: 12px" type="submit" [disabled]="loading()">
+      {{ (loading() ? 'auth.register.submitting' : 'auth.register.submit') | t }}
+    </button>
+
+    <p class="footer-link">{{ 'auth.register.haveAccount' | t }} <a routerLink="/login">{{ 'auth.register.login' | t }}</a></p>
+    <nav class="legal-links">
+      <a routerLink="/confidentialite">{{ 'legal.privacyLink' | t }}</a>
+      <a routerLink="/conditions">{{ 'legal.termsLink' | t }}</a>
+    </nav>
+  </form>
+</div>

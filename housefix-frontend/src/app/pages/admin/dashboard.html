@@ -1,0 +1,106 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>{{ 'admin.dashboard.title' | t }}</h2>
+      <p>{{ 'admin.dashboard.subtitle' | t }}</p>
+    </div>
+    <button type="button" class="btn btn-outline" (click)="exportOpen.set(!exportOpen())" [attr.aria-expanded]="exportOpen()">
+      <i class="bi bi-file-earmark-arrow-down"></i> {{ 'admin.export.open' | t }}
+    </button>
+  </div>
+
+  @if (exportOpen()) {
+    <app-export-panel (closed)="exportOpen.set(false)" />
+  }
+
+  @if (loading()) {
+    <div class="spinner"></div>
+  } @else if (data(); as d) {
+    <div class="grid-4">
+      <div class="stat-card">
+        <span class="chip">{{ 'admin.dashboard.chips.users' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-people-fill"></i></span>
+        <div class="stat-label">{{ 'admin.dashboard.clients' | t }}</div>
+        <div class="stat-value">{{ d.clients_inscrits }}</div>
+        <div class="stat-sub">{{ 'admin.dashboard.clientsSub' | t }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'admin.dashboard.chips.network' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-person-badge-fill"></i></span>
+        <div class="stat-label">{{ 'admin.dashboard.prestataires' | t }}</div>
+        <div class="stat-value">{{ d.prestataires_actifs }}</div>
+        <div class="stat-sub">{{ 'admin.dashboard.prestatairesSub' | t }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'admin.dashboard.chips.interventions' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-calendar2-check-fill"></i></span>
+        <div class="stat-label">{{ 'admin.dashboard.rdv' | t }}</div>
+        <div class="stat-value">{{ d.total_rdv }}</div>
+        <div class="stat-sub">{{ 'admin.dashboard.rdvSub' | t }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="chip">{{ 'admin.dashboard.chips.quality' | t }}</span>
+        <span class="stat-icon"><i class="bi bi-star-fill"></i></span>
+        <div class="stat-label">{{ 'admin.dashboard.rating' | t }}</div>
+        <div class="stat-value">{{ 'admin.dashboard.ratingValue' | t: { value: (d.moyenne_evaluations | appNumber: '1.1-1') } }}</div>
+        <div class="stat-sub">{{ (d.nb_avis === 1 ? 'admin.dashboard.ratingSub.one' : 'admin.dashboard.ratingSub.other') | t: { count: d.nb_avis } }}</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <a routerLink="/admin/validations" class="card mini warning">
+        <span class="mini-icon"><i class="bi bi-hourglass-split"></i></span>
+        <div class="grow">
+          <div class="small muted">{{ 'admin.dashboard.pending' | t }}</div>
+          <div class="mini-value">{{ d.prestataires_en_attente }}</div>
+        </div>
+        <i class="bi bi-chevron-right muted"></i>
+      </a>
+      <a routerLink="/admin/litiges" class="card mini danger">
+        <span class="mini-icon"><i class="bi bi-exclamation-triangle"></i></span>
+        <div class="grow">
+          <div class="small muted">{{ 'admin.dashboard.litiges' | t }}</div>
+          <div class="mini-value">{{ d.litiges_ouverts }}</div>
+        </div>
+        <i class="bi bi-chevron-right muted"></i>
+      </a>
+      <div class="card mini success">
+        <span class="mini-icon"><i class="bi bi-cash-stack"></i></span>
+        <div class="grow">
+          <div class="small muted">{{ 'admin.dashboard.revenue' | t }}</div>
+          <div class="mini-value">{{ 'admin.shared.amount' | t: { amount: (d.chiffre_affaires | appNumber: '1.2-2') } }}</div>
+          <div class="small muted">{{ 'admin.dashboard.revenueSplit' | t: { ht: (d.chiffre_affaires_ht | appNumber: '1.2-2'), tva: (d.tva_collectee | appNumber: '1.2-2') } }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 bottom">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="chip">{{ 'admin.dashboard.chips.details' | t }}</span>
+            <h3 class="mt">{{ 'admin.dashboard.statusTitle' | t }}</h3>
+          </div>
+        </div>
+        <div class="stack">
+          @for (s of d.statuts; track s.status) {
+            <div class="status-row">
+              <app-status-badge [status]="s.status" />
+              <span class="grow"></span>
+              <span class="pill">{{ (s.count === 1 ? 'admin.dashboard.interventions.one' : 'admin.dashboard.interventions.other') | t: { count: s.count } }}</span>
+            </div>
+          } @empty {
+            <div class="empty-state"><i class="bi bi-calendar-x"></i>{{ 'admin.dashboard.empty' | t }}</div>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>{{ 'admin.dashboard.chartTitle' | t }}</h3>
+        </div>
+        <div class="chart-box"><canvas #chart></canvas></div>
+      </div>
+    </div>
+  }
+</div>

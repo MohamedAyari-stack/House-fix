@@ -1,0 +1,261 @@
+<app-public-header />
+
+<main class="wrap page">
+  @if (notFound()) {
+    <div class="card empty">
+      <i class="bi bi-search"></i>
+      <p>{{ 'services.page.notFound' | t }}</p>
+      <a class="btn btn-primary" routerLink="/services">{{ 'services.page.backToServices' | t }}</a>
+    </div>
+  } @else {
+    <nav class="breadcrumb" aria-label="breadcrumb">
+      <a routerLink="/">{{ 'services.nav.home' | t }}</a>
+      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      <a routerLink="/services">{{ 'services.nav.services' | t }}</a>
+      @if (data(); as d) {
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        @if (d.gouvernorat) {
+          <a [routerLink]="['/services', d.service.slug]">{{ d.service.nom }}</a>
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          <span aria-current="page">{{ d.gouvernorat | gouv }}</span>
+        } @else {
+          <span aria-current="page">{{ d.service.nom }}</span>
+        }
+      }
+    </nav>
+
+    <!-- Accroche -->
+    <header class="svc-hero hero-service">
+      @if (data(); as d) {
+        <span class="service-icon big"><i class="bi" [class]="'bi ' + (d.service.icone || 'bi-tools')"></i></span>
+        <div class="hero-text">
+          <h1>{{ heading() }}</h1>
+          <p class="lead">{{ d.service.description || ('services.page.lead' | t) }}</p>
+          @if (d.service.description) {
+            <p class="muted">{{ 'services.page.lead' | t }}</p>
+          }
+        </div>
+        @if (canBook()) {
+          <a class="btn btn-primary btn-lg" [routerLink]="bookLink().path" [queryParams]="bookLink().query">
+            <i class="bi bi-calendar-plus"></i> {{ 'services.page.bookService' | t }}
+          </a>
+        }
+      } @else {
+        <span class="sk sk-icon big"></span>
+        <div class="hero-text"><span class="sk sk-title"></span><span class="sk sk-line"></span></div>
+      }
+    </header>
+
+    <!-- Chiffres réels -->
+    <section class="stats" [attr.aria-busy]="loading()">
+      @if (data(); as d) {
+        <div class="stat">
+          <span class="label">{{ 'services.page.stats.providers' | t }}</span>
+          <strong>{{ d.stats.prestataires }}</strong>
+          <span class="sub">{{ (d.stats.disponibles === 1 ? 'services.page.stats.availableOne' : 'services.page.stats.availableOther') | t: { count: d.stats.disponibles } }}</span>
+        </div>
+        <div class="stat">
+          <span class="label">{{ 'services.page.stats.rating' | t }}</span>
+          @if (d.stats.note_moyenne !== null) {
+            <strong><i class="bi bi-star-fill star"></i> {{ d.stats.note_moyenne | appNumber: '1.1-1' }}/5</strong>
+            <span class="sub">{{ (d.stats.avis === 1 ? 'services.page.stats.reviewsOne' : 'services.page.stats.reviewsOther') | t: { count: d.stats.avis } }}</span>
+          } @else {
+            <strong>—</strong>
+            <span class="sub">{{ 'services.page.stats.noRating' | t }}</span>
+          }
+        </div>
+        <div class="stat">
+          <span class="label">{{ 'services.page.stats.price' | t }}</span>
+          @if (d.stats.tarif_min !== null) {
+            <strong>
+              @if (d.stats.tarif_min === d.stats.tarif_max) {
+                {{ 'services.page.stats.priceSingle' | t: { min: (d.stats.tarif_min | appNumber: '1.0-0') } }}
+              } @else {
+                {{ 'services.page.stats.priceRange' | t: { min: (d.stats.tarif_min | appNumber: '1.0-0'), max: (d.stats.tarif_max | appNumber: '1.0-0') } }}
+              }
+            </strong>
+            <span class="sub">{{ 'services.page.stats.priceMedian' | t: { median: (d.stats.tarif_median | appNumber: '1.0-1') } }}</span>
+          } @else {
+            <strong>—</strong>
+          }
+        </div>
+        <div class="stat">
+          <span class="label">{{ 'services.page.stats.jobs' | t }}</span>
+          <strong>{{ d.stats.interventions }}</strong>
+        </div>
+      } @else {
+        @for (p of placeholders; track p) {
+          <div class="stat"><span class="sk sk-line short"></span><span class="sk sk-num"></span></div>
+        }
+      }
+    </section>
+
+    @if (data(); as d) {
+      <!-- Ville -->
+      @if (d.gouvernorats.length) {
+        <section class="where" aria-labelledby="where-title">
+          <h2 id="where-title" class="small-title">{{ 'services.page.where' | t }}</h2>
+          <div class="pills">
+            <a class="pill" [class.active]="!d.gouvernorat" [routerLink]="['/services', d.service.slug]">{{ 'services.page.allTunisia' | t }}</a>
+            @for (g of d.gouvernorats; track g.nom) {
+              <a
+                class="pill"
+                [class.active]="d.gouvernorat === g.nom"
+                [routerLink]="['/services', d.service.slug]"
+                [queryParams]="{ gouvernorat: g.nom }"
+                [attr.aria-current]="d.gouvernorat === g.nom ? 'page' : null"
+              >
+                {{ g.nom | gouv }} <span class="count">{{ g.prestataires }}</span>
+              </a>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Prestataires -->
+      <section aria-labelledby="pros-title">
+        <h2 id="pros-title" class="section-title">{{ 'services.page.pros.title' | t }}</h2>
+        @if (d.prestataires.length) {
+          <div class="pros">
+            @for (p of d.prestataires; track p.id) {
+              <article class="card pro">
+                <div class="pro-head">
+                  <app-avatar [nom]="p.nom" [photoUrl]="p.photo_url" />
+                  <div class="pro-id">
+                    <h3>{{ p.nom }}</h3>
+                    <span class="muted small"><i class="bi bi-geo-alt"></i> {{ p.gouvernorat | gouv }}</span>
+                  </div>
+                  <span class="badge" [class.badge-success]="p.disponible" [class.badge-warning]="!p.disponible">
+                    {{ (p.disponible ? 'services.page.pros.available' : 'services.page.pros.unavailable') | t }}
+                  </span>
+                </div>
+                @if (p.specialite) {
+                  <p class="spec">{{ p.specialite }}</p>
+                }
+                <div class="pro-facts">
+                  @if (p.nb_avis > 0) {
+                    <span><app-star-rating [value]="p.note_moyenne" /> <small class="muted">({{ p.nb_avis }})</small></span>
+                  } @else {
+                    <span class="badge badge-info">{{ 'services.page.pros.new' | t }}</span>
+                  }
+                  @if (p.experience_annees) {
+                    <span class="muted small">{{ 'services.page.pros.experience' | t: { count: p.experience_annees } }}</span>
+                  }
+                </div>
+                <div class="pro-foot">
+                  @if (p.tarif_horaire) {
+                    <strong>{{ 'services.page.pros.perHour' | t: { price: (p.tarif_horaire | appNumber: '1.0-0') } }}</strong>
+                  }
+                  @if (canBook() && p.disponible) {
+                    <a class="btn btn-outline btn-sm" [routerLink]="bookLink(p.id).path" [queryParams]="bookLink(p.id).query">
+                      {{ 'services.page.book' | t }}
+                    </a>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="card empty">
+            <i class="bi bi-people"></i>
+            <p>{{ 'services.page.pros.empty' | t }}</p>
+            @if (d.gouvernorat) {
+              <a class="btn btn-outline" [routerLink]="['/services', d.service.slug]">{{ 'services.page.pros.seeAll' | t }}</a>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Avis -->
+      @if (d.avis.length) {
+        <section aria-labelledby="reviews-title">
+          <h2 id="reviews-title" class="section-title">{{ 'services.page.reviews.title' | t }}</h2>
+          <div class="reviews">
+            @for (a of d.avis; track $index) {
+              <figure class="card review">
+                <app-star-rating [value]="a.note" />
+                <blockquote>{{ a.commentaire }}</blockquote>
+                <figcaption>
+                  <strong>{{ a.auteur }}</strong>
+                  <small class="muted">
+                    @if (a.gouvernorat) { {{ a.gouvernorat | gouv }} · }
+                    {{ a.date | appDate: 'long' }}
+                  </small>
+                </figcaption>
+              </figure>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- FAQ -->
+      <section aria-labelledby="faq-title">
+        <h2 id="faq-title" class="section-title">{{ 'services.page.faq.title' | t }}</h2>
+        <div class="faq">
+          <details open>
+            <summary>{{ 'services.page.faq.priceQ' | t: { service: d.service.nom, lieu: lieu() } }}</summary>
+            <p>
+              @if (d.stats.tarif_min !== null && d.stats.tarif_min === d.stats.tarif_max) {
+                {{ 'services.page.faq.priceASingle' | t: { min: (d.stats.tarif_min | appNumber: '1.0-0') } }}
+              } @else if (d.stats.tarif_min !== null) {
+                {{ 'services.page.faq.priceA' | t: { min: (d.stats.tarif_min | appNumber: '1.0-0'), max: (d.stats.tarif_max | appNumber: '1.0-0'), median: (d.stats.tarif_median | appNumber: '1.0-1') } }}
+              } @else {
+                {{ 'services.page.faq.priceNone' | t: { lieu: lieu() } }}
+              }
+            </p>
+            <figure class="faq-video">
+              <video controls playsinline preload="none" poster="/videos/faq-prix.jpg" [attr.aria-label]="'services.page.faq.videoLabel' | t: { question: ('services.page.faq.priceQ' | t: { service: d.service.nom, lieu: lieu() }) }">
+                <source src="/videos/faq-prix.mp4" type="video/mp4" />
+              </video>
+              <figcaption>{{ 'services.page.faq.videoNote' | t }}</figcaption>
+            </figure>
+          </details>
+          <details>
+            <summary>{{ 'services.page.faq.verifiedQ' | t }}</summary>
+            <p>{{ 'services.page.faq.verifiedA' | t }}</p>
+            <figure class="faq-video">
+              <video controls playsinline preload="none" poster="/videos/faq-verifie.jpg?v=2" [attr.aria-label]="'services.page.faq.videoLabel' | t: { question: ('services.page.faq.verifiedQ' | t) }">
+                <source src="/videos/faq-verifie.mp4?v=2" type="video/mp4" />
+              </video>
+              <figcaption>{{ 'services.page.faq.videoNote' | t }}</figcaption>
+            </figure>
+          </details>
+          <details>
+            <summary>{{ 'services.page.faq.bookQ' | t }}</summary>
+            <p>{{ 'services.page.faq.bookA' | t }}</p>
+            <figure class="faq-video">
+              <video controls playsinline preload="none" poster="/videos/faq-reserver.jpg" [attr.aria-label]="'services.page.faq.videoLabel' | t: { question: ('services.page.faq.bookQ' | t) }">
+                <source src="/videos/faq-reserver.mp4" type="video/mp4" />
+              </video>
+              <figcaption>{{ 'services.page.faq.videoNote' | t }}</figcaption>
+            </figure>
+          </details>
+          <details>
+            <summary>{{ 'services.page.faq.payQ' | t }}</summary>
+            <p>{{ 'services.page.faq.payA' | t }}</p>
+            <figure class="faq-video">
+              <video controls playsinline preload="none" poster="/videos/faq-payer.jpg" [attr.aria-label]="'services.page.faq.videoLabel' | t: { question: ('services.page.faq.payQ' | t) }">
+                <source src="/videos/faq-payer.mp4" type="video/mp4" />
+              </video>
+              <figcaption>{{ 'services.page.faq.videoNote' | t }}</figcaption>
+            </figure>
+          </details>
+        </div>
+      </section>
+
+      <!-- Autres services (maillage interne) -->
+      <section aria-labelledby="others-title">
+        <h2 id="others-title" class="section-title">{{ 'services.page.others' | t }}</h2>
+        <div class="pills">
+          @for (s of d.autres_services; track s.id) {
+            <a class="pill" [routerLink]="['/services', s.slug]" [queryParams]="d.gouvernorat ? { gouvernorat: d.gouvernorat } : {}">
+              <i class="bi" [class]="'bi ' + (s.icone || 'bi-tools')"></i> {{ s.nom }}
+            </a>
+          }
+        </div>
+      </section>
+    }
+  }
+</main>
+
+<app-public-footer />
